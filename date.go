@@ -30,6 +30,16 @@ func (this Date) MinuteString() string {
 	return fmt.Sprintf("%04d%02d%02d %02d:%02d:00", year, month, day, hour, minute)
 }
 
+// Day of minute date
+func (this Date) MinuteDay() uint32 {
+	dayValue := uint32(this & 0xFFFF)
+	year := (dayValue / 2048) + 2004
+	month := (dayValue % 2048) / 100
+	day := (dayValue % 2048) % 100
+
+	return year * 10000 + month * 100 + day
+}
+
 func FromDayString(s string) (error, Date) {
 	ret, err := strconv.ParseUint(s, 10, 64)
 	return err, Date(ret)
@@ -81,4 +91,11 @@ func FromMinuteString(s string) (error, Date) {
 	minuteValue := hour * 60 + minute
 
 	return nil, Date((minuteValue << 16) | dayValue)
+}
+
+func GetDateDay(period Period, date uint32) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		return Date(date).MinuteDay()
+	}
+	return date
 }

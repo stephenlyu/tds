@@ -22,11 +22,13 @@ const (
 type Period interface {
 	Name() string
 	ShortName() string
+	Unit() PeriodUnit
+	UnitCount() int
 }
 
 type period struct {
-	Unit PeriodUnit
-	UnitCount int
+	unit PeriodUnit
+	unitCount int
 }
 
 // periodStr format: M1 or MINUTE1
@@ -76,37 +78,45 @@ func FromString(periodStr string) (error, Period) {
 }
 
 func (this *period) Name() string {
-	switch (this.Unit) {
+	switch (this.unit) {
 	case PERIOD_UNIT_MINUTE:
-		return fmt.Sprintf("MINUTE%d", this.UnitCount)
+		return fmt.Sprintf("MINUTE%d", this.unitCount)
 	case PERIOD_UNIT_DAY:
-		return fmt.Sprintf("DAY%d", this.UnitCount)
+		return fmt.Sprintf("DAY%d", this.unitCount)
 	case PERIOD_UNIT_WEEK:
-		return fmt.Sprintf("WEEK%d", this.UnitCount)
+		return fmt.Sprintf("WEEK%d", this.unitCount)
 	case PERIOD_UNIT_MONTH:
-		return fmt.Sprintf("MONTH%d", this.UnitCount)
+		return fmt.Sprintf("MONTH%d", this.unitCount)
 	case PERIOD_UNIT_QUARTER:
-		return fmt.Sprintf("QUARTER%d", this.UnitCount)
+		return fmt.Sprintf("QUARTER%d", this.unitCount)
 	case PERIOD_UNIT_YEAR:
-		return fmt.Sprintf("YEAR%d", this.UnitCount)
+		return fmt.Sprintf("YEAR%d", this.unitCount)
 	}
 	return ""
 }
 
 func (this *period) ShortName() string {
-	switch (this.Unit) {
+	switch (this.unit) {
 	case PERIOD_UNIT_MINUTE:
-		return fmt.Sprintf("M%d", this.UnitCount)
+		return fmt.Sprintf("M%d", this.unitCount)
 	case PERIOD_UNIT_DAY:
-		return fmt.Sprintf("D%d", this.UnitCount)
+		return fmt.Sprintf("D%d", this.unitCount)
 	case PERIOD_UNIT_WEEK:
-		return fmt.Sprintf("W%d", this.UnitCount)
+		return fmt.Sprintf("W%d", this.unitCount)
 	case PERIOD_UNIT_MONTH:
-		return fmt.Sprintf("N%d", this.UnitCount)
+		return fmt.Sprintf("N%d", this.unitCount)
 	case PERIOD_UNIT_QUARTER:
-		return fmt.Sprintf("Q%d", this.UnitCount)
+		return fmt.Sprintf("Q%d", this.unitCount)
 	case PERIOD_UNIT_YEAR:
-		return fmt.Sprintf("Y%d", this.UnitCount)
+		return fmt.Sprintf("Y%d", this.unitCount)
 	}
 	return ""
+}
+
+func (this *period) Unit() PeriodUnit {
+	return this.unit
+}
+
+func (this *period) UnitCount() int {
+	return this.unitCount
 }

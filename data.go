@@ -1,12 +1,13 @@
 package tds
 
 
+// After price adjusted, it maybe a negative value
 type Record struct {
 	Date uint32
-	Open uint32
-	Close uint32
-	High uint32
-	Low uint32
+	Open int32
+	Close int32
+	High int32
+	Low int32
 	Volume float32
 	Amount float32
 }
