@@ -6,6 +6,7 @@ import (
 	"strconv"
 	"regexp"
 	"errors"
+	"time"
 )
 
 type Date uint32
@@ -98,4 +99,49 @@ func GetDateDay(period Period, date uint32) uint32 {
 		return Date(date).MinuteDay()
 	}
 	return date
+}
+
+func GetDateWeek(period Period, date uint32) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		date = Date(date).MinuteDay()
+	}
+
+	year := date / 10000
+	month := (date % 10000) / 100
+	day := date % 100
+
+	d := time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
+
+	y, week := d.ISOWeek()
+
+	return uint32(y * 100 + week)
+}
+
+func GetDateMonth(period Period, date uint32) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		date = Date(date).MinuteDay()
+	}
+	return date / 100
+}
+
+var monthQuarterMap = map[int]uint32 {
+	1: 3, 2: 3, 3: 3,
+	4: 6, 5: 6, 6: 6,
+	7: 9, 8: 9, 9: 9,
+	10: 12, 11: 12, 12: 12,
+}
+func GetDateQuarter(period Period, date uint32) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		date = Date(date).MinuteDay()
+	}
+	year := date / 10000
+	month := (date % 10000) / 100
+	return year * 100 + monthQuarterMap[int(month)]
+}
+
+func GetDateYear(period Period, date uint32) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		date = Date(date).MinuteDay()
+	}
+	return date / 10000
 }
