@@ -26,6 +26,8 @@ type Date interface {
 	Eq(other Date) bool
 	Lt(other Date) bool
 	Gt(other Date) bool
+
+	String() string
 }
 
 type date struct {
@@ -44,7 +46,11 @@ func (this *date) DayString() string {
 }
 
 func (this *date) MinuteString() string {
-	return fmt.Sprintf("%04d%02d%02d %02d:%02d:00", this.year, this.month, this.day, this.hour, this.minute)
+	return fmt.Sprintf("%04d%02d%02d %02d:%02d:%d", this.year, this.month, this.day, this.hour, this.minute, this.second)
+}
+
+func (this *date) String() string {
+	return this.MinuteString()
 }
 
 func (this *date) MinuteDate() uint32 {
