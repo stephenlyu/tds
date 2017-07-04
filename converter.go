@@ -22,51 +22,8 @@ type forwardAdjustConverter struct {
 // Period Data Converters
 
 func NewPeriodConverter(srcPeriod Period, destPeriod Period) Converter {
-	switch destPeriod.Unit() {
-	case PERIOD_UNIT_MINUTE:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_MINUTE:
-		default:
-			return nil
-		}
-	case PERIOD_UNIT_DAY:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_MINUTE:
-		case PERIOD_UNIT_DAY:
-		default:
-			return nil
-		}
-	case PERIOD_UNIT_WEEK:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_DAY:
-		case PERIOD_UNIT_WEEK:
-		default:
-			return nil
-		}
-	case PERIOD_UNIT_MONTH:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_DAY:
-		case PERIOD_UNIT_MONTH:
-		default:
-			return nil
-		}
-	case PERIOD_UNIT_QUARTER:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_DAY:
-		case PERIOD_UNIT_MONTH:
-		case PERIOD_UNIT_QUARTER:
-		default:
-			return nil
-		}
-	case PERIOD_UNIT_YEAR:
-		switch srcPeriod.Unit() {
-		case PERIOD_UNIT_DAY:
-		case PERIOD_UNIT_MONTH:
-		case PERIOD_UNIT_QUARTER:
-		case PERIOD_UNIT_YEAR:
-		default:
-			return nil
-		}
+	if !srcPeriod.CanConvertTo(destPeriod) {
+		return nil
 	}
 
 	return &periodConverter{srcPeriod: srcPeriod, destPeriod: destPeriod}
@@ -277,6 +234,10 @@ func (this *periodConverter) convertSimple(sourceData []Record) []Record {
 }
 
 func (this *periodConverter) Convert(sourceData []Record) []Record {
+	if this.destPeriod.Eq(this.srcPeriod) {
+		return sourceData
+	}
+
 	switch this.destPeriod.Unit() {
 	case PERIOD_UNIT_MINUTE:
 		switch this.srcPeriod.Unit() {

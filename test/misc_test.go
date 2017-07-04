@@ -6,6 +6,8 @@ import (
 	"fmt"
 	"regexp"
 	"time"
+	"encoding/gob"
+	"bytes"
 )
 
 var _ = Describe("TestRegexp", func() {
@@ -51,10 +53,42 @@ var _ = Describe("TestSlice", func() {
 	})
 })
 
-
 var _ = Describe("TestDate", func() {
 	It("test", func (){
 		now := time.Now()
 		now.Weekday()
+	})
+})
+
+var _ = Describe("TestGob", func() {
+	It("test", func (){
+		type A struct {
+			I int
+			F float32
+		}
+
+		var m = map[string][]A {
+			"600000": []A{
+				A{I: 100, F: 1.34},
+				A{I: 200, F: 3.89},
+			},
+		}
+		buffer := &bytes.Buffer{}
+		encoder := gob.NewEncoder(buffer)
+		encoder.Encode(m)
+		fmt.Println(buffer.Bytes())
+
+		decoder := gob.NewDecoder(bytes.NewBuffer(buffer.Bytes()))
+		var m1 map[string][]A
+		err := decoder.Decode(&m1)
+		fmt.Println(err, m1)
+	})
+})
+
+var _ = Describe("TestConv", func() {
+	It("test", func (){
+		i := -1
+		ui := uint32(i)
+		fmt.Println(ui)
 	})
 })

@@ -9,17 +9,86 @@ import (
 	"time"
 )
 
-type Date uint32
+type Date interface {
+	DayString() string
+	MinuteString() string
+	MinuteDate() uint32
+	DayDate() uint32
+	PeriodValue(period Period) uint32
+
+	Year() uint32
+	Month() uint32
+	Day() uint32
+	Hour() uint32
+	Minute() uint32
+	Second() uint32
+
+	Eq(other Date) bool
+	Lt(other Date) bool
+	Gt(other Date) bool
+}
+
+type date struct {
+	year uint16
+	month uint8
+	day uint8
+	hour uint8
+	minute uint8
+	second uint8
+}
 
 const MAX_DATE = math.MaxUint32
 
-func (this Date) DayString() string {
-	return fmt.Sprintf("%d", this)
+func (this *date) DayString() string {
+	return fmt.Sprintf("%04d%02d%02d", this.year, this.month, this.day)
 }
 
-func (this Date) MinuteString() string {
-	dayValue := uint16(this & 0xFFFF)
-	minuteValue := uint16((this >> 16) & 0xFFFF)
+func (this *date) MinuteString() string {
+	return fmt.Sprintf("%04d%02d%02d %02d:%02d:00", this.year, this.month, this.day, this.hour, this.minute)
+}
+
+func (this *date) MinuteDate() uint32 {
+	dayValue := uint32(this.year - 2004) * 2048 + uint32(this.month) * 100 + uint32(this.day)
+	minuteValue := uint32(this.hour) * 60 + uint32(this.minute)
+	return minuteValue << 16 | dayValue
+}
+
+func (this *date) DayDate() uint32 {
+	return uint32(this.year) * 10000 + uint32(this.month) * 100 + uint32(this.day)
+}
+
+func (this *date) PeriodValue(period Period) uint32 {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		return this.MinuteDate()
+	}
+	return this.DayDate()
+}
+
+func (this *date) Year() uint32 {return uint32(this.year)}
+func (this *date) Month() uint32 {return uint32(this.month)}
+func (this *date) Day() uint32 {return uint32(this.day)}
+func (this *date) Hour() uint32 {return uint32(this.hour)}
+func (this *date) Minute() uint32 {return uint32(this.minute)}
+func (this *date) Second() uint32 {return uint32(this.second)}
+
+func (this *date) Eq(other Date) bool {
+	return this.Year() == other.Year() && this.Month() == other.Month() && this.Day() == other.Day() &&
+	this.Hour() == other.Hour() && this.Minute() == other.Minute() && this.Second() == other.Second()
+}
+
+func (this *date) Lt(other Date) bool {
+	return this.Year() < other.Year() || this.Month() < other.Month() || this.Day() < other.Day() ||
+		this.Hour() < other.Hour() || this.Minute() < other.Minute() || this.Second() < other.Second()
+}
+
+func (this *date) Gt(other Date) bool {
+	return this.Year() > other.Year() || this.Month() > other.Month() || this.Day() > other.Day() ||
+		this.Hour() > other.Hour() || this.Minute() > other.Minute() || this.Second() > other.Second()
+}
+
+func NewDateFromMinuteDate(v uint32) Date {
+	dayValue := uint16(v & 0xFFFF)
+	minuteValue := uint16((v >> 16) & 0xFFFF)
 
 	year := (dayValue / 2048) + 2004
 	month := (dayValue % 2048) / 100
@@ -27,34 +96,37 @@ func (this Date) MinuteString() string {
 
 	hour := minuteValue / 60
 	minute := minuteValue % 60
-
-	return fmt.Sprintf("%04d%02d%02d %02d:%02d:00", year, month, day, hour, minute)
+	return &date{uint16(year), uint8(month), uint8(day), uint8(hour), uint8(minute), 0}
 }
 
-// Day of minute date
-func (this Date) MinuteDay() uint32 {
-	dayValue := uint32(this & 0xFFFF)
-	year := (dayValue / 2048) + 2004
-	month := (dayValue % 2048) / 100
-	day := (dayValue % 2048) % 100
-
-	return year * 10000 + month * 100 + day
+func NewDateFromDayDate(v uint32) Date {
+	year := v / 10000
+	month := (v % 10000) / 100
+	day := (v % 10000) % 100
+	return &date{uint16(year), uint8(month), uint8(day), 0, 0, 0}
 }
 
-func FromDayString(s string) (error, Date) {
+func NewPeriodDate(period Period, v uint32) Date {
+	if period.Unit() == PERIOD_UNIT_MINUTE {
+		return NewDateFromMinuteDate(v)
+	}
+	return NewDateFromDayDate(v)
+}
+
+func NewDateFromDayString(s string) (error, Date) {
 	ret, err := strconv.ParseUint(s, 10, 64)
-	return err, Date(ret)
+	return err, NewDateFromDayDate(uint32(ret))
 }
 
-func FromMinuteString(s string) (error, Date) {
+func NewDateFromMinuteString(s string) (error, Date) {
 	regExp, err := regexp.Compile("^([0-9]{4})([0-9]{2})([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})$")
 	if err != nil {
-		return errors.New("bad minute string"), 0
+		return errors.New("bad minute string"), nil
 	}
 
 	result := regExp.FindSubmatch([]byte(s))
 	if result != nil {
-		return errors.New("bad minute string"), 0
+		return errors.New("bad minute string"), nil
 	}
 
 	year, _ := strconv.Atoi(string(result[1]))
@@ -65,63 +137,60 @@ func FromMinuteString(s string) (error, Date) {
 	second, _ := strconv.Atoi(string(result[6]))
 
 	if year < 2004 || year > 2004 + 511 {
-		return errors.New("bad year"), 0
+		return errors.New("bad year"), nil
 	}
 
 	if month <= 0 || month > 12 {
-		return errors.New("bad month"), 0
+		return errors.New("bad month"), nil
 	}
 
 	if day <= 0 || day > 31 {
-		return errors.New("bad day"), 0
+		return errors.New("bad day"), nil
 	}
 
 	if hour <= 0 || year >= 24 {
-		return errors.New("bad hour"), 0
+		return errors.New("bad hour"), nil
 	}
 
 	if minute <= 0 || minute > 59 {
-		return errors.New("bad minute"), 0
+		return errors.New("bad minute"), nil
 	}
 
 	if second <= 0 || second > 59 {
-		return errors.New("bad second"), 0
+		return errors.New("bad second"), nil
 	}
 
-	dayValue := year * 2048 + month * 100 + day
-	minuteValue := hour * 60 + minute
-
-	return nil, Date((minuteValue << 16) | dayValue)
+	return nil, &date{uint16(year), uint8(month), uint8(day), uint8(hour), uint8(minute), uint8(second)}
 }
 
 func GetDateDay(period Period, date uint32) uint32 {
 	if period.Unit() == PERIOD_UNIT_MINUTE {
-		return Date(date).MinuteDay()
+		return NewDateFromMinuteDate(date).MinuteDate()
 	}
 	return date
 }
 
-func GetDateWeek(period Period, date uint32) uint32 {
+func GetDateWeek(period Period, dateValue uint32) uint32 {
+	var date Date
 	if period.Unit() == PERIOD_UNIT_MINUTE {
-		date = Date(date).MinuteDay()
+		date = NewDateFromMinuteDate(dateValue)
+	} else {
+		date = NewDateFromDayDate(dateValue)
 	}
 
-	year := date / 10000
-	month := (date % 10000) / 100
-	day := date % 100
-
-	d := time.Date(int(year), time.Month(month), int(day), 0, 0, 0, 0, time.UTC)
+	d := time.Date(int(date.Year()), time.Month(date.Month()), int(date.Day()), 0, 0, 0, 0, time.UTC)
 
 	y, week := d.ISOWeek()
 
 	return uint32(y * 100 + week)
 }
 
-func GetDateMonth(period Period, date uint32) uint32 {
+func GetDateMonth(period Period, dateValue uint32) uint32 {
 	if period.Unit() == PERIOD_UNIT_MINUTE {
-		date = Date(date).MinuteDay()
+		date := NewDateFromMinuteDate(dateValue)
+		return date.Year() * 100 + date.Month()
 	}
-	return date / 100
+	return dateValue / 100
 }
 
 var monthQuarterMap = map[int]uint32 {
@@ -130,18 +199,24 @@ var monthQuarterMap = map[int]uint32 {
 	7: 9, 8: 9, 9: 9,
 	10: 12, 11: 12, 12: 12,
 }
-func GetDateQuarter(period Period, date uint32) uint32 {
+func GetDateQuarter(period Period, dateValue uint32) uint32 {
+	var date Date
 	if period.Unit() == PERIOD_UNIT_MINUTE {
-		date = Date(date).MinuteDay()
+		date = NewDateFromMinuteDate(dateValue)
+	} else {
+		date = NewDateFromDayDate(dateValue)
 	}
-	year := date / 10000
-	month := (date % 10000) / 100
-	return year * 100 + monthQuarterMap[int(month)]
+
+	return date.Year() * 100 + monthQuarterMap[int(date.Month())]
 }
 
-func GetDateYear(period Period, date uint32) uint32 {
+func GetDateYear(period Period, dateValue uint32) uint32 {
+	var date Date
 	if period.Unit() == PERIOD_UNIT_MINUTE {
-		date = Date(date).MinuteDay()
+		date = NewDateFromMinuteDate(dateValue)
+	} else {
+		date = NewDateFromDayDate(dateValue)
 	}
-	return date / 10000
+
+	return date.Year()
 }

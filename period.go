@@ -24,6 +24,11 @@ type Period interface {
 	ShortName() string
 	Unit() PeriodUnit
 	UnitCount() int
+	Eq(other Period) bool
+	Lt(other Period) bool
+	Gt(other Period) bool
+	CanConvertTo(other Period) bool
+	CanConvertFrom(other Period) bool
 }
 
 type period struct {
@@ -119,4 +124,85 @@ func (this *period) Unit() PeriodUnit {
 
 func (this *period) UnitCount() int {
 	return this.unitCount
+}
+
+func (this *period) Eq(other Period) bool {
+	return this.Unit() == other.Unit() && this.UnitCount() == other.UnitCount()
+}
+
+func (this *period) Lt(other Period) bool {
+	return this.Unit() < other.Unit() || this.UnitCount() < other.UnitCount()
+}
+
+func (this *period) Gt(other Period) bool {
+	return this.Unit() > other.Unit() || this.UnitCount() > other.UnitCount()
+}
+
+func (this *period) CanConvertTo(other Period) bool {
+	switch other.Unit() {
+	case PERIOD_UNIT_MINUTE:
+		switch this.Unit() {
+		case PERIOD_UNIT_MINUTE:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	case PERIOD_UNIT_DAY:
+		switch this.Unit() {
+		case PERIOD_UNIT_MINUTE:
+			return other.UnitCount() == 1
+		case PERIOD_UNIT_DAY:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	case PERIOD_UNIT_WEEK:
+		switch this.Unit() {
+		case PERIOD_UNIT_DAY:
+			return other.UnitCount() == 1
+		case PERIOD_UNIT_WEEK:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	case PERIOD_UNIT_MONTH:
+		switch this.Unit() {
+		case PERIOD_UNIT_DAY:
+			return other.UnitCount() == 1
+		case PERIOD_UNIT_MONTH:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	case PERIOD_UNIT_QUARTER:
+		switch this.Unit() {
+		case PERIOD_UNIT_DAY:
+			fallthrough
+		case PERIOD_UNIT_MONTH:
+			return other.UnitCount() == 1
+		case PERIOD_UNIT_QUARTER:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	case PERIOD_UNIT_YEAR:
+		switch this.Unit() {
+		case PERIOD_UNIT_DAY:
+			fallthrough
+		case PERIOD_UNIT_MONTH:
+			fallthrough
+		case PERIOD_UNIT_QUARTER:
+			return other.UnitCount() == 1
+		case PERIOD_UNIT_YEAR:
+			return other.UnitCount() % this.UnitCount() == 0
+		default:
+			return false
+		}
+	}
+
+	return true
+}
+
+func (this *period) CanConvertFrom(other Period) bool {
+	return other.CanConvertTo(this)
 }
