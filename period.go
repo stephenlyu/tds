@@ -37,11 +37,11 @@ type period struct {
 }
 
 // periodStr format: M1 or MINUTE1
-func FromString(periodStr string) (error, Period) {
+func PeriodFromString(periodStr string) (error, Period) {
 	regExp, _ := regexp.Compile("^([A-Z]+)([0-9]+)$")
 
 	result := regExp.FindSubmatch([]byte(strings.ToUpper(periodStr)))
-	if result != nil {
+	if result == nil {
 		return errors.New("bad period string"), nil
 	}
 
@@ -49,7 +49,7 @@ func FromString(periodStr string) (error, Period) {
 	nUnit, _ := strconv.Atoi(string(result[2]))
 
 	if nUnit == 0 {
-		return errors.New("bad period string"), nil
+		return errors.New("bad unit count"), nil
 	}
 
 	switch unitStr {
