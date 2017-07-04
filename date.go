@@ -121,11 +121,11 @@ func NewDateFromDayString(s string) (error, Date) {
 func NewDateFromMinuteString(s string) (error, Date) {
 	regExp, err := regexp.Compile("^([0-9]{4})([0-9]{2})([0-9]{2}) ([0-9]{2}):([0-9]{2}):([0-9]{2})$")
 	if err != nil {
-		return errors.New("bad minute string"), nil
+		return errors.New("bad regexp pattern"), nil
 	}
 
 	result := regExp.FindSubmatch([]byte(s))
-	if result != nil {
+	if result == nil {
 		return errors.New("bad minute string"), nil
 	}
 
@@ -148,15 +148,15 @@ func NewDateFromMinuteString(s string) (error, Date) {
 		return errors.New("bad day"), nil
 	}
 
-	if hour <= 0 || year >= 24 {
+	if hour < 0 || hour >= 24 {
 		return errors.New("bad hour"), nil
 	}
 
-	if minute <= 0 || minute > 59 {
+	if minute < 0 || minute > 59 {
 		return errors.New("bad minute"), nil
 	}
 
-	if second <= 0 || second > 59 {
+	if second < 0 || second > 59 {
 		return errors.New("bad second"), nil
 	}
 
