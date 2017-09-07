@@ -1,4 +1,4 @@
-package period
+package date
 
 import (
 	"time"
@@ -11,7 +11,6 @@ func GetDateDay(date uint64) int {
 
 func GetDateWeek(date uint64) int {
 	d := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond))
-	return d.Date()
 
 	y, week := d.ISOWeek()
 
@@ -20,7 +19,7 @@ func GetDateWeek(date uint64) int {
 
 func GetDateMonth(date uint64) int {
 	d := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond))
-	return int(d.Month())
+	return d.Year() * 100 + int(d.Month())
 }
 
 var monthQuarterMap = map[int]int {

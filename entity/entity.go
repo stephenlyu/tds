@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"math"
 	"errors"
+	"unsafe"
 )
 
 
@@ -26,7 +27,12 @@ type InfoExItem struct {
 	RationedShares float32		`json:"rationed_shares"`
 }
 
-const recordSize = 28
+const recordSize = int(unsafe.Sizeof(Record{}))
+
+func (this *Record) Eq(that *Record) bool {
+	return this.Date == that.Date && this.Open == that.Open && this.Close == that.Close && this.High == that.High &&
+	this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
+}
 
 func RecordFromBytes(data []byte, r *Record) error {
 	if len(data) != recordSize {
@@ -37,25 +43,25 @@ func RecordFromBytes(data []byte, r *Record) error {
 		return errors.New("bad record argument")
 	}
 
-	r.Date = binary.LittleEndian.Uint32(data[0:4])
-	r.Open = int32(binary.LittleEndian.Uint32(data[4:8]))
-	r.Close = int32(binary.LittleEndian.Uint32(data[8:12]))
-	r.High = int32(binary.LittleEndian.Uint32(data[12:16]))
-	r.Low = int32(binary.LittleEndian.Uint32(data[16:20]))
-	r.Volume = math.Float32frombits(binary.LittleEndian.Uint32(data[20:24]))
-	r.Amount = math.Float32frombits(binary.LittleEndian.Uint32(data[24:28]))
+	r.Date = binary.LittleEndian.Uint64(data[0:8])
+	r.Open = int32(binary.LittleEndian.Uint32(data[8:12]))
+	r.Close = int32(binary.LittleEndian.Uint32(data[12:16]))
+	r.High = int32(binary.LittleEndian.Uint32(data[16:20]))
+	r.Low = int32(binary.LittleEndian.Uint32(data[20:24]))
+	r.Volume = math.Float32frombits(binary.LittleEndian.Uint32(data[24:28]))
+	r.Amount = math.Float32frombits(binary.LittleEndian.Uint32(data[28:32]))
 	return nil
 }
 
 func (this *Record) Bytes() []byte {
 	ret := make([]byte, recordSize)
 
-	binary.LittleEndian.PutUint32(ret[0:4], this.Date)
-	binary.LittleEndian.PutUint32(ret[4:8], uint32(this.Open))
-	binary.LittleEndian.PutUint32(ret[8:12], uint32(this.Close))
-	binary.LittleEndian.PutUint32(ret[12:16], uint32(this.High))
-	binary.LittleEndian.PutUint32(ret[16:20], uint32(this.Low))
-	binary.LittleEndian.PutUint32(ret[20:24], math.Float32bits(this.Volume))
-	binary.LittleEndian.PutUint32(ret[24:28], math.Float32bits(this.Amount))
+	binary.LittleEndian.PutUint64(ret[0:8], this.Date)
+	binary.LittleEndian.PutUint32(ret[8:12], uint32(this.Open))
+	binary.LittleEndian.PutUint32(ret[12:16], uint32(this.Close))
+	binary.LittleEndian.PutUint32(ret[16:20], uint32(this.High))
+	binary.LittleEndian.PutUint32(ret[20:24], uint32(this.Low))
+	binary.LittleEndian.PutUint32(ret[24:28], math.Float32bits(this.Volume))
+	binary.LittleEndian.PutUint32(ret[28:32], math.Float32bits(this.Amount))
 	return ret
 }

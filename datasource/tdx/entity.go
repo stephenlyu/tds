@@ -4,6 +4,7 @@ import (
 	"encoding/binary"
 	"errors"
 	"math"
+	"unsafe"
 )
 
 type TDXRecord struct {
@@ -16,7 +17,7 @@ type TDXRecord struct {
 	Amount float32
 }
 
-const TDX_RECORD_SIZSE = 28
+const TDX_RECORD_SIZSE = int(unsafe.Sizeof(TDXRecord{}))
 
 func RecordFromBytes(data []byte, r *TDXRecord) error {
 	if len(data) != TDX_RECORD_SIZSE {
