@@ -1,4 +1,4 @@
-package tds
+package period
 
 import (
 	"regexp"

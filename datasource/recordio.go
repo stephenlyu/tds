@@ -1,11 +1,17 @@
-package tds
+package datasource
 
 import (
 	"os"
 	"errors"
 	"bufio"
+
+	. "github.com/stephenlyu/tds/entity"
 )
 
+type RecordMarshaller interface {
+	ToBytes(record *Record) ([]byte, error)
+	FromBytes(bytes []byte, record *Record) error
+}
 
 type RecordReader interface {
 	Read(start, end int) (error, []Record)
@@ -18,10 +24,12 @@ type RecordWriter interface {
 
 type recordReader struct {
 	file *os.File
+	recordSize int
+	marshaller RecordMarshaller
 }
 
-func NewRecordReader(file *os.File) RecordReader {
-	return &recordReader{file}
+func NewRecordReader(file *os.File, recordSize int, marshaller RecordMarshaller) RecordReader {
+	return &recordReader{file, recordSize, marshaller}
 }
 
 func (this *recordReader) Read(start, end int) (error, []Record) {
@@ -35,9 +43,9 @@ func (this *recordReader) Read(start, end int) (error, []Record) {
 
 	result := make([]Record, end - start)
 
-	this.file.Seek(int64(start) * int64(recordSize), os.SEEK_SET)
+	this.file.Seek(int64(start) * int64(this.recordSize), os.SEEK_SET)
 
-	buf := make([]byte, 100 * recordSize)
+	buf := make([]byte, 100 * this.recordSize)
 
 	var n int
 	current := start
@@ -46,18 +54,18 @@ func (this *recordReader) Read(start, end int) (error, []Record) {
 		if count > 100 {
 			count = 100
 		}
-		n, err = this.file.Read(buf[0:count * recordSize])
+		n, err = this.file.Read(buf[0:count * this.recordSize])
 		if err != nil {
 			return err, nil
 		}
 
-		if n < count * recordSize {
+		if n < count * this.recordSize {
 			return errors.New("read less data"), nil
 		}
 
 		for i := 0; i < count; i++ {
 			result = append(result, Record{})
-			err = RecordFromBytes(buf[i * recordSize: (i+1) * recordSize], &result[len(result) - 1])
+			err = this.marshaller.FromBytes(buf[i * this.recordSize: (i+1) * this.recordSize], &result[len(result) - 1])
 			if err != nil {
 				return err, nil
 			}
@@ -73,29 +81,35 @@ func (this *recordReader) Count() (error, int) {
 		return err, 0
 	}
 
-	if stat.Size() % recordSize != 0 {
+	if stat.Size() % this.recordSize != 0 {
 		return errors.New("file damaged"), 0
 	}
 
-	return nil, int(stat.Size() / recordSize)
+	return nil, int(stat.Size() / this.recordSize)
 }
 
 type recordWriter struct {
 	file *os.File
+	recordSize int
+	marshaller RecordMarshaller
 }
 
-func NewRecordWriter(file *os.File) RecordWriter {
-	return &recordWriter{file}
+func NewRecordWriter(file *os.File, recordSize int, marshaller RecordMarshaller) RecordWriter {
+	return &recordWriter{file, recordSize, marshaller}
 }
 
 func (this *recordWriter) Write(from int, data []Record) error {
-	this.file.Seek(int64(from) * int64(recordSize), os.SEEK_SET)
+	this.file.Seek(int64(from) * int64(this.recordSize), os.SEEK_SET)
 
 	writer := bufio.NewWriter(this.file)
 
 	for i := 0; i < len(data); i++ {
 		r := &data[i]
-		_, err := writer.Write(r.Bytes())
+		bytes, err := this.marshaller.ToBytes(r)
+		if err != nil {
+			return err
+		}
+		_, err = writer.Write(bytes)
 		if err != nil {
 			return err
 		}

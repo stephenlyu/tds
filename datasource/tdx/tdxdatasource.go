@@ -1,36 +1,19 @@
-package tds
+package tdxdatasource
 
 import (
-	"encoding/gob"
 	"path/filepath"
 	"os"
 	"io/ioutil"
 	"sort"
 	"errors"
+
+	. "github.com/stephenlyu/tds/entity"
+	. "github.com/stephenlyu/tds/period"
+	. "github.com/stephenlyu/tds/datasource"
+	"encoding/json"
 )
 
-type InfoExDataSource interface {
-	GetStockInfoEx(code string) (error, []InfoExItem)
-	SetInfoEx(infoEx map[string][]InfoExItem) error
-}
-
-type DataSource interface {
-	InfoExDataSource
-	Reset()
-
-	GetData(code string, period Period) (error, []Record)
-	GetRangeData(code string, period Period, startDate, endDate Date) (error, []Record)
-	GetDataFromLast(code string, period Period, endDate Date, count int) (error, []Record)
-
-	GetForwardAdjustedData(code string, period Period) (error, []Record)
-	GetForwardAdjustedRangeData(code string, period Period, startDate, endDate Date) (error, []Record)
-	GetForwardAdjustedDataFromLast(code string, period Period, endDate Date, count int) (error, []Record)
-
-	AppendData(code string, period Period, data []Record) error // Append data
-	SaveData(code string, period Period, data []Record) error // Replace data with new data
-}
-
-type datasource struct {
+type tdxDataSource struct {
 	Root string
 	NeedBuildCache bool
 
@@ -38,23 +21,23 @@ type datasource struct {
 }
 
 func NewDataSource(dsDir string, needBuildCache bool) DataSource {
-	return &datasource{Root: dsDir, NeedBuildCache: needBuildCache}
+	return &tdxDataSource{Root: dsDir, NeedBuildCache: needBuildCache}
 }
 
-func (this *datasource) Reset() {
+func (this *tdxDataSource) Reset() {
 	this.InfoEx = nil
 }
 
-func (this *datasource) GetStockInfoEx(code string) (error, []InfoExItem){
+func (this *tdxDataSource) GetStockInfoEx(code string) (error, []InfoExItem){
 	if this.InfoEx == nil {
 		filePath := filepath.Join(this.Root, "infoex.dat")
-		file, err := os.Open(filePath)
+
+		bytes, err := ioutil.ReadFile(filePath)
 		if err != nil {
 			return err, nil
 		}
-		defer file.Close()
-		decoder := gob.NewDecoder(file)
-		err = decoder.Decode(&this.InfoEx)
+
+		err = json.Unmarshal(bytes, &this.InfoEx)
 		if err != nil {
 			return err, nil
 		}
@@ -63,24 +46,23 @@ func (this *datasource) GetStockInfoEx(code string) (error, []InfoExItem){
 	return nil, this.InfoEx[code]
 }
 
-func (this *datasource) SetInfoEx(infoEx map[string][]InfoExItem) error {
+func (this *tdxDataSource) SetInfoEx(infoEx map[string][]InfoExItem) error {
 	this.InfoEx = infoEx
 	filePath := filepath.Join(this.Root, "infoex.dat")
-	file, err := os.Create(filePath)
+
+	bytes, err := json.Marshal(this.InfoEx)
 	if err != nil {
 		return err
 	}
-	defer file.Close()
 
-	encoder := gob.NewEncoder(file)
-	return encoder.Encode(infoEx)
+	return ioutil.WriteFile(filePath, bytes, 0666)
 }
 
-func (this *datasource) GetData(code string, period Period) (error, []Record) {
+func (this *tdxDataSource) GetData(code string, period Period) (error, []Record) {
 	return this.GetRangeData(code, period, nil, nil)
 }
 
-func (this *datasource) getDataFile(code string, period Period) (Period, string) {
+func (this *tdxDataSource) getDataFile(code string, period Period) (Period, string) {
 	files, err := ioutil.ReadDir(this.Root)
 	if err != nil {
 		return nil, ""
@@ -91,7 +73,7 @@ func (this *datasource) getDataFile(code string, period Period) (Period, string)
 		if !f.IsDir() {
 			continue
 		}
-		err, p := FromString(f.Name())
+		err, p := PeriodFromString(f.Name())
 		if err != nil {
 			continue
 		}
@@ -119,7 +101,7 @@ func (this *datasource) getDataFile(code string, period Period) (Period, string)
 	return periods[0], filepath.Join(this.Root, periods[0].ShortName(), code)
 }
 
-func (this *datasource) binarySearchRecord(reader RecordReader, period Period, date Date, count int) (error, int, bool) {
+func (this *tdxDataSource) binarySearchRecord(reader RecordReader, period Period, date uint64, count int) (error, int, bool) {
 	low := 0
 	high := count - 1
 	var mid int
@@ -134,10 +116,9 @@ func (this *datasource) binarySearchRecord(reader RecordReader, period Period, d
 			return errors.New("no data read"), -1, false
 		}
 
-		rDate := NewPeriodDate(period, records[0].Date)
-		if rDate.Eq(date) {
+		if records[0].Date == date {
 			return nil, mid, true
-		} else if rDate.Lt(date) {
+		} else if records[0].Date < date {
 			low = mid + 1
 		} else {
 			high = mid - 1
@@ -146,8 +127,8 @@ func (this *datasource) binarySearchRecord(reader RecordReader, period Period, d
 	return nil, low, false
 }
 
-func (this *datasource) GetRangeData(code string, period Period, startDate, endDate Date) (error, []Record) {
-	if startDate != nil && endDate != nil && startDate.Gt(endDate) {
+func (this *tdxDataSource) GetRangeData(code string, period Period, startDate, endDate uint64) (error, []Record) {
+	if startDate != 0 && endDate != 0 && startDate > endDate {
 		return nil, []Record{}
 	}
 
@@ -162,7 +143,9 @@ func (this *datasource) GetRangeData(code string, period Period, startDate, endD
 	}
 	defer file.Close()
 
-	reader := NewRecordReader(file)
+	marshaller := NewMarshaller(period)
+
+	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err, nil
@@ -199,7 +182,7 @@ func (this *datasource) GetRangeData(code string, period Period, startDate, endD
 	return nil, converter.Convert(records)
 }
 
-func (this *datasource) GetDataFromLast(code string, period Period, endDate Date, count int) (error, []Record) {
+func (this *tdxDataSource) GetDataFromLast(code string, period Period, endDate uint64, count int) (error, []Record) {
 	dataPeriod, dataFile := this.getDataFile(code, period)
 	if dataFile == "" {
 		return errors.New("data file not found"), nil
@@ -211,7 +194,9 @@ func (this *datasource) GetDataFromLast(code string, period Period, endDate Date
 	}
 	defer file.Close()
 
-	reader := NewRecordReader(file)
+	marshaller := NewMarshaller(period)
+
+	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err, nil
@@ -246,11 +231,11 @@ func (this *datasource) GetDataFromLast(code string, period Period, endDate Date
 	return nil, converter.Convert(records)
 }
 
-func (this *datasource) GetForwardAdjustedData(code string, period Period) (error, []Record) {
+func (this *tdxDataSource) GetForwardAdjustedData(code string, period Period) (error, []Record) {
 	return this.GetForwardAdjustedRangeData(code, period, nil, nil)
 }
 
-func (this *datasource) GetForwardAdjustedRangeData(code string, period Period, startDate, endDate Date) (error, []Record) {
+func (this *tdxDataSource) GetForwardAdjustedRangeData(code string, period Period, startDate, endDate uint64) (error, []Record) {
 	err, records := this.GetRangeData(code, period, startDate, endDate)
 	if err != nil {
 		return err, nil
@@ -268,7 +253,7 @@ func (this *datasource) GetForwardAdjustedRangeData(code string, period Period, 
 	return nil, converter.Convert(records)
 }
 
-func (this *datasource) GetForwardAdjustedDataFromLast(code string, period Period, endDate Date, count int) (error, []Record) {
+func (this *tdxDataSource) GetForwardAdjustedDataFromLast(code string, period Period, endDate uint64, count int) (error, []Record) {
 	err, records := this.GetDataFromLast(code, period, endDate, count)
 	if err != nil {
 		return err, nil
@@ -286,18 +271,16 @@ func (this *datasource) GetForwardAdjustedDataFromLast(code string, period Perio
 	return nil, converter.Convert(records)
 }
 
-func (this *datasource) checkData(period Period, data []Record) bool {
+func (this *tdxDataSource) checkData(period Period, data []Record) bool {
 	for i := 0; i < len(data) - 1; i++ {
-		date := NewPeriodDate(period, data[i].Date)
-		nextDate := NewPeriodDate(period, data[i + 1].Date)
-		if !date.Lt(nextDate) {
+		if !data[i].Date < data[i + 1].Date {
 			return false
 		}
 	}
 	return true
 }
 
-func (this *datasource) AppendData(code string, period Period, data []Record) error {
+func (this *tdxDataSource) AppendData(code string, period Period, data []Record) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -313,7 +296,8 @@ func (this *datasource) AppendData(code string, period Period, data []Record) er
 	}
 	defer file.Close()
 
-	reader := NewRecordReader(file)
+	marshaller := NewMarshaller(period)
+	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err
@@ -326,23 +310,22 @@ func (this *datasource) AppendData(code string, period Period, data []Record) er
 		if len(records) == 0 {
 			return errors.New("no data read")
 		}
-		lastDate := NewPeriodDate(period, records[0].Date)
+		lastDate := records[0].Date
 
 		for i := 0; i < len(data); i++ {
 			r := data[i]
-			date := NewPeriodDate(period, r.Date)
-			if date.Gt(lastDate) {
+			if r.Date > lastDate {
 				data = data[i:]
 				break
 			}
 		}
 	}
 
-	writer := NewRecordWriter(file)
+	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
 	return writer.Write(recordCount, data)
 }
 
-func (this *datasource) SaveData(code string, period Period, data []Record) error {
+func (this *tdxDataSource) SaveData(code string, period Period, data []Record) error {
 	if len(data) == 0 {
 		return nil
 	}
@@ -359,6 +342,7 @@ func (this *datasource) SaveData(code string, period Period, data []Record) erro
 	}
 	defer file.Close()
 
-	writer := NewRecordWriter(file)
+	marshaller := NewMarshaller(period)
+	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
 	return writer.Write(0, data)
 }

@@ -1,9 +1,15 @@
-package tds
+package datasource
 
 import (
 	"sort"
 	"errors"
+
+	. "github.com/stephenlyu/tds/entity"
+	. "github.com/stephenlyu/tds/period"
+	. "github.com/stephenlyu/tds/date"
 )
+
+// TODO: 数据转换时，针对跨市场的情况，需要重新考虑时间的计算问题
 
 type Converter interface {
 	Convert(sourceData []Record) []Record
@@ -64,7 +70,7 @@ func (this *periodConverter) convertMinute2Minute(sourceData []Record) []Record 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		day := GetDateDay(this.srcPeriod, r.Date)
+		day := GetDateDay(r.Date)
 		if day != lastDay{
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], multiplier)
@@ -91,7 +97,7 @@ func (this *periodConverter) convertMinute2Day(sourceData []Record) []Record {
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		day := GetDateDay(this.srcPeriod, r.Date)
+		day := GetDateDay(r.Date)
 		if day != lastDay{
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -120,7 +126,7 @@ func (this *periodConverter) convertDay2Week(sourceData []Record) []Record {
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		week := GetDateWeek(this.srcPeriod, r.Date)
+		week := GetDateWeek(r.Date)
 		if week != lastWeek {
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -147,7 +153,7 @@ func (this *periodConverter) convertDay2Month(sourceData []Record) []Record {
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		month := GetDateMonth(this.srcPeriod, r.Date)
+		month := GetDateMonth(r.Date)
 		if month != lastMonth {
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -174,7 +180,7 @@ func (this *periodConverter) convert2Quarter(sourceData []Record) []Record {
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		quarter := GetDateQuarter(this.srcPeriod, r.Date)
+		quarter := GetDateQuarter(r.Date)
 		if quarter != lastQuarter {
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -201,7 +207,7 @@ func (this *periodConverter) convert2Year(sourceData []Record) []Record {
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		year := GetDateYear(this.srcPeriod, r.Date)
+		year := GetDateYear(r.Date)
 		if year != lastYear {
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -327,7 +333,7 @@ func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
 	for i := 0; i < len(data); i++ {
 		r := &data[i]
 
-		if GetDateDay(this.period, r.Date) >= item.Date {
+		if GetDateDay(r.Date) >= item.Date {
 			break
 		}
 
@@ -347,8 +353,8 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 		return sourceData
 	}
 
-	firstDate := GetDateDay(this.period, sourceData[0].Date)
-	lastDate := GetDateDay(this.period, sourceData[len(sourceData) - 1].Date)
+	firstDate := GetDateDay(sourceData[0].Date)
+	lastDate := GetDateDay(sourceData[len(sourceData) - 1].Date)
 
 	if this.items[len(this.items) - 1].Date <= firstDate {
 		return sourceData
