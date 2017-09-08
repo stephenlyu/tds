@@ -6,6 +6,11 @@ import (
 	"github.com/stephenlyu/tds/period"
 )
 
+const MINUTE = 60 * 1000
+const MINUTE_1300 = 13 * 60 * MINUTE
+const MINUTE_1130 = (11 * 60 + 30) * MINUTE
+const DAY = 24 * 60 * MINUTE
+
 type tdxMarshaller struct {
 	period period.Period
 }
@@ -15,8 +20,16 @@ func NewMarshaller(period period.Period) datasource.RecordMarshaller {
 }
 
 func (this *tdxMarshaller) ToBytes(record *entity.Record) ([]byte, error) {
+	date := record.Date
+	if this.period.Unit() == period.PERIOD_UNIT_MINUTE {
+		date += MINUTE
+		if date % DAY == MINUTE_1130 {
+			date += 90 * MINUTE
+		}
+	}
+
 	tRecord := TDXRecord{
-		Date: TimestampToDate(this.period, record.Date),
+		Date: TimestampToDate(this.period, date),
 		Open: record.Open,
 		Close: record.Close,
 		High: record.High,
@@ -41,5 +54,13 @@ func (this *tdxMarshaller) FromBytes(bytes []byte, record *entity.Record) error 
 	record.Low = tRecord.Low
 	record.Amount = tRecord.Amount
 	record.Volume = tRecord.Volume
+
+	if this.period.Unit() == period.PERIOD_UNIT_MINUTE {
+		if record.Date % DAY == MINUTE_1300 {
+			record.Date -= 90 * MINUTE
+		}
+		record.Date -= MINUTE
+	}
+
 	return nil
 }

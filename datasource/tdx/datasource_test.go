@@ -2,8 +2,86 @@ package tdxdatasource_test
 
 import (
 	"testing"
+	"github.com/stephenlyu/tds/datasource/tdx"
+	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/util"
+	"github.com/stephenlyu/tds/period"
+	"github.com/z-ray/log"
+	"github.com/stephenlyu/tds/date"
 )
 
 func TestTdxDataSource(t *testing.T) {
+	log.SetOutputLevel(log.Ldebug)
 
+	security, err := entity.ParseSecurity("000001.SZ")
+	util.Assert(err == nil, "")
+	util.Assert(security != nil, "")
+
+	err, period1 := period.PeriodFromString("M1")
+	util.Assert(err == nil, "")
+
+	err, period2 := period.PeriodFromString("M5")
+	util.Assert(err == nil, "")
+
+	err, period3 := period.PeriodFromString("D1")
+	util.Assert(err == nil, "")
+
+	err, period4 := period.PeriodFromString("M15")
+	util.Assert(err == nil, "")
+
+	startDate, err := date.DayString2Timestamp("20170101")
+	util.Assert(err == nil, "")
+
+	endDate, err := date.DayString2Timestamp("20170210")
+	util.Assert(err == nil, "")
+
+	ds := tdxdatasource.NewDataSource("data", true)
+
+	err, items := ds.GetStockInfoEx(security)
+	util.Assert(err == nil, "")
+	util.Assert(len(items) == 20, "")
+
+	// 分钟数据
+	err, data := ds.GetData(security, period1)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 49920, "")
+
+	err, data = ds.GetRangeData(security, period1, startDate, endDate)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 1200, "")
+
+	// 5分钟数据
+	err, data = ds.GetData(security, period2)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 22608, "")
+
+	err, data = ds.GetRangeData(security, period2, startDate, endDate)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 1104, "")
+
+	// 日线数据
+	err, data = ds.GetData(security, period3)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 6018, "")
+
+	err, data = ds.GetRangeData(security, period3, startDate, endDate)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 24, "")
+
+	// 15分钟数据
+	err, data = ds.GetData(security, period4)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 7536, "")
+
+	err, data = ds.GetRangeData(security, period4, startDate, endDate)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 368, "")
+
+	// 日线数据前复权
+	err, data = ds.GetForwardAdjustedData(security, period3)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 6018, "")
+	for i := range data {
+		log.Debug(data[i].String())
+	}
 }

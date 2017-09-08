@@ -13,12 +13,19 @@ import (
 	"encoding/json"
 	"strings"
 	"fmt"
+	"github.com/z-ray/log"
 )
 
 var periodNameMap = map[string]string {
 	"fzline": "MINUTE5",
 	"lday": "DAY1",
 	"minline": "MINUTE1",
+}
+
+var periodNameReMap = map[string]string {
+	"MINUTE5": "fzline",
+	"DAY1": "lday",
+	"MINUTE1": "minline",
 }
 
 var fileNameSuffixMap = map[string]string {
@@ -83,6 +90,7 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 
 	files, err := ioutil.ReadDir(root)
 	if err != nil {
+		log.Errorf("tdxDataSource.getDataFile read dir %s fail, error: %v", root, err)
 		return nil, ""
 	}
 
@@ -98,15 +106,17 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 
 		err, p := PeriodFromString(name)
 		if err != nil {
+			log.Debugf("tdxDataSource.getDataFile parse period %s error: %v", name, err)
 			continue
 		}
 		if !p.CanConvertTo(period) {
 			continue
 		}
 
-		filePath := filepath.Join(this.Root, f.Name(), code)
+		filePath := filepath.Join(root, f.Name(), fmt.Sprintf("%s%s", code, fileNameSuffixMap[p.Name()]))
 		_, err = os.Stat(filePath)
 		if err != nil {
+			log.Debugf("tdxDataSource.getDataFile stat file: %s error: %v", filePath, err)
 			continue
 		}
 
@@ -114,15 +124,15 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 	}
 
 	if len(periods) == 0 {
+		log.Errorf("tdxDataSource.getDataFile no period directory found")
 		return nil, ""
 	}
 
 	sort.SliceStable(periods, func (i,j int) bool {
 		return periods[i].Gt(periods[j])
 	})
-
 	dataPeriod := periods[0]
-	return dataPeriod, filepath.Join(this.Root, dataPeriod.ShortName(), fmt.Sprintf("%s.%s", code, fileNameSuffixMap[dataPeriod.Name()]))
+	return dataPeriod, filepath.Join(root, periodNameReMap[dataPeriod.Name()], fmt.Sprintf("%s%s", code, fileNameSuffixMap[dataPeriod.Name()]))
 }
 
 func (this *tdxDataSource) binarySearchRecord(reader RecordReader, period Period, date uint64, count int) (error, int, bool) {
@@ -184,7 +194,8 @@ func (this *tdxDataSource) GetRangeData(security *Security, period Period, start
 		}
 	}
 	if endDate != 0 {
-		err, endIndex, found := this.binarySearchRecord(reader, dataPeriod, endDate, recordCount)
+		var found bool
+		err, endIndex, found = this.binarySearchRecord(reader, dataPeriod, endDate, recordCount)
 		if err != nil {
 			return err, nil
 		}
@@ -207,6 +218,7 @@ func (this *tdxDataSource) GetRangeData(security *Security, period Period, start
 }
 
 func (this *tdxDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
+	// FIXME: 获取其他周期数据时，如何保证count?
 	dataPeriod, dataFile := this.getDataFile(security, period)
 	if dataFile == "" {
 		return errors.New("data file not found"), nil

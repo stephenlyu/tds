@@ -49,7 +49,7 @@ func (this *recordReader) Read(start, end int) (error, []Record) {
 
 	var n int
 	current := start
-	for {
+	for current < end {
 		count := end - current
 		if count > 100 {
 			count = 100
@@ -64,12 +64,13 @@ func (this *recordReader) Read(start, end int) (error, []Record) {
 		}
 
 		for i := 0; i < count; i++ {
-			result = append(result, Record{})
-			err = this.marshaller.FromBytes(buf[i * this.recordSize: (i+1) * this.recordSize], &result[len(result) - 1])
+			result[current-start+i] = Record{}
+			err = this.marshaller.FromBytes(buf[i * this.recordSize: (i+1) * this.recordSize], &result[current-start+i])
 			if err != nil {
 				return err, nil
 			}
 		}
+		current += count
 	}
 
 	return nil, result

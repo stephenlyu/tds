@@ -5,6 +5,8 @@ import (
 	"math"
 	"errors"
 	"unsafe"
+	"github.com/stephenlyu/tds/date"
+	"fmt"
 )
 
 
@@ -32,6 +34,38 @@ const recordSize = int(unsafe.Sizeof(Record{}))
 func (this *Record) Eq(that *Record) bool {
 	return this.Date == that.Date && this.Open == that.Open && this.Close == that.Close && this.High == that.High &&
 	this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
+}
+
+func (this *Record) GetDateString() string {
+	return date.Timestamp2SecondString(this.Date)
+}
+
+func (this *Record) GetOpen() float32 {
+	return float32(this.Open) / 1000.0
+}
+
+func (this *Record) GetClose() float32 {
+	return float32(this.Close) / 1000.0
+}
+
+func (this *Record) GetLow() float32 {
+	return float32(this.Low) / 1000.0
+}
+
+func (this *Record) GetHigh() float32 {
+	return float32(this.High) / 1000.0
+}
+
+func (this *Record) GetAmount() float32 {
+	return this.Amount
+}
+
+func (this *Record) GetVolume() float32 {
+	return this.Volume
+}
+
+func (this *Record) String() string {
+	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDateString(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
 }
 
 func RecordFromBytes(data []byte, r *Record) error {
