@@ -29,7 +29,7 @@ func (this *tdxMarshaller) ToBytes(record *entity.Record) ([]byte, error) {
 
 func (this *tdxMarshaller) FromBytes(bytes []byte, record *entity.Record) error {
 	tRecord := TDXRecord{}
-	err := RecordFromBytes(bytes, &tRecord)
+	err := TDXRecordFromBytes(bytes, &tRecord)
 	if err != nil {
 		return err
 	}

@@ -65,13 +65,13 @@ func (this *periodConverter) convertMinute2Minute(sourceData []Record) []Record 
 
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastDay uint32 = 0
+	var lastDay int = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
 		day := GetDateDay(r.Date)
-		if day != lastDay{
+		if day != lastDay {
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], multiplier)
 			}
@@ -92,12 +92,12 @@ func (this *periodConverter) convertMinute2Minute(sourceData []Record) []Record 
 func (this *periodConverter) convertMinute2Day(sourceData []Record) []Record {
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastDay uint32 = 0
+	var lastDay uint64 = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		day := GetDateDay(r.Date)
+		day := GetDayTimestamp(r.Date)
 		if day != lastDay{
 			if startIndex >= 0 {
 				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
@@ -121,7 +121,7 @@ func (this *periodConverter) convertMinute2Day(sourceData []Record) []Record {
 func (this *periodConverter) convertDay2Week(sourceData []Record) []Record {
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastWeek uint32 = 0
+	var lastWeek int = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
@@ -148,7 +148,7 @@ func (this *periodConverter) convertDay2Week(sourceData []Record) []Record {
 func (this *periodConverter) convertDay2Month(sourceData []Record) []Record {
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastMonth uint32 = 0
+	var lastMonth int = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
@@ -175,7 +175,7 @@ func (this *periodConverter) convertDay2Month(sourceData []Record) []Record {
 func (this *periodConverter) convert2Quarter(sourceData []Record) []Record {
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastQuarter uint32 = 0
+	var lastQuarter int = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
@@ -202,7 +202,7 @@ func (this *periodConverter) convert2Quarter(sourceData []Record) []Record {
 func (this *periodConverter) convert2Year(sourceData []Record) []Record {
 	destData := make([]Record, 0, len(sourceData))
 
-	var lastYear uint32 = 0
+	var lastYear int = 0
 
 	startIndex := -1
 	for i := 0; i < len(sourceData); i++ {
@@ -333,7 +333,7 @@ func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
 	for i := 0; i < len(data); i++ {
 		r := &data[i]
 
-		if GetDateDay(r.Date) >= item.Date {
+		if GetDateDay(r.Date) >= int(item.Date) {
 			break
 		}
 
@@ -356,7 +356,7 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 	firstDate := GetDateDay(sourceData[0].Date)
 	lastDate := GetDateDay(sourceData[len(sourceData) - 1].Date)
 
-	if this.items[len(this.items) - 1].Date <= firstDate {
+	if int(this.items[len(this.items) - 1].Date) <= firstDate {
 		return sourceData
 	}
 
@@ -364,10 +364,10 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 	copy(ret, sourceData)
 
 	for _, item := range this.items {
-		if item.Date <= firstDate {
+		if int(item.Date) <= firstDate {
 			continue
 		}
-		if item.Date > lastDate {
+		if int(item.Date) > lastDate {
 			break
 		}
 

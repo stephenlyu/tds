@@ -11,12 +11,12 @@ func MinuteDateToTimestamp(v uint32) uint64 {
 	dayValue := uint16(v & 0xFFFF)
 	minuteValue := uint16((v >> 16) & 0xFFFF)
 
-	year := (dayValue / 2048) + 2004
-	month := (dayValue % 2048) / 100
-	day := (dayValue % 2048) % 100
+	year := int((dayValue / 2048) + 2004)
+	month := int((dayValue % 2048) / 100)
+	day := int((dayValue % 2048) % 100)
 
-	hour := minuteValue / 60
-	minute := minuteValue % 60
+	hour := int(minuteValue / 60)
+	minute := int(minuteValue % 60)
 
 	date := time.Date(year, time.Month(month), day, hour, minute, 0, 0, local)
 
@@ -24,9 +24,9 @@ func MinuteDateToTimestamp(v uint32) uint64 {
 }
 
 func DayDateToTimestamp(v uint32) uint64 {
-	year := v / 10000
-	month := (v % 10000) / 100
-	day := (v % 10000) % 100
+	year := int(v / 10000)
+	month := int((v % 10000) / 100)
+	day := int((v % 10000) % 100)
 
 	date := time.Date(year, time.Month(month), day, 0, 0, 0, 0, local)
 

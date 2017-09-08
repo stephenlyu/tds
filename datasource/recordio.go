@@ -81,11 +81,11 @@ func (this *recordReader) Count() (error, int) {
 		return err, 0
 	}
 
-	if stat.Size() % this.recordSize != 0 {
+	if stat.Size() % int64(this.recordSize) != 0 {
 		return errors.New("file damaged"), 0
 	}
 
-	return nil, int(stat.Size() / this.recordSize)
+	return nil, int(stat.Size() / int64(this.recordSize))
 }
 
 type recordWriter struct {

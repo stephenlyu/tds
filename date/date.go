@@ -4,6 +4,12 @@ import (
 	"time"
 )
 
+const DAY_MILLISECONDS = 24 * 60 * 60 * 1000
+
+func GetDayTimestamp(date uint64) uint64 {
+	return date / DAY_MILLISECONDS * DAY_MILLISECONDS
+}
+
 func GetDateDay(date uint64) int {
 	d := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond))
 	return d.Year() * 10000 + int(d.Month()) * 100 + d.Day()
