@@ -23,7 +23,7 @@ type periodConverter struct {
 
 type forwardAdjustConverter struct {
 	period Period
-	items []*InfoExItem
+	items []InfoExItem
 }
 
 // Period Data Converters
@@ -313,9 +313,9 @@ func (this *periodConverter) Convert(sourceData []Record) []Record {
 
 
 func NewForwardAdjustConverter(period Period, items []InfoExItem) Converter {
-	cpy := make([]*InfoExItem, len(items))
+	cpy := make([]InfoExItem, len(items))
 	for i, item := range items {
-		cpy[i] = &item
+		cpy[i] = item
 	}
 
 	sort.SliceStable(cpy, func (i, j int) bool {
@@ -328,8 +328,9 @@ func NewForwardAdjustConverter(period Period, items []InfoExItem) Converter {
 func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
 	var forwardAdjustPrice = func (price int32) int32 {
 		fPrice := float32(price) / 1000.0
-		ret := int32(((fPrice - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.DeliveredShares) * 1000.0)
-		log.Debug(fPrice, ret)
+		ret := int32(((fPrice - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares) * 10000.0)
+		ret = (ret + 5) / 10
+		log.Println(price, ret, item.Bonus, item.RationedShares, item.RationedSharePrice, item.DeliveredShares, item.RationedShares)
 		return ret
 	}
 
@@ -366,13 +367,15 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 	ret := make([]Record, len(sourceData))
 	copy(ret, sourceData)
 
-	for _, item := range this.items {
+	for i := range this.items {
+		item := &this.items[i]
 		if int(item.Date) <= firstDate {
 			continue
 		}
 		if int(item.Date) > lastDate {
 			break
 		}
+		log.Debug(firstDate, lastDate, item.Date)
 
 		this.doConvert(ret, item)
 	}

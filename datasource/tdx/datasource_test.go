@@ -8,6 +8,7 @@ import (
 	"github.com/stephenlyu/tds/period"
 	"github.com/z-ray/log"
 	"github.com/stephenlyu/tds/date"
+	"fmt"
 )
 
 func TestTdxDataSource(t *testing.T) {
@@ -39,7 +40,7 @@ func TestTdxDataSource(t *testing.T) {
 
 	err, items := ds.GetStockInfoEx(security)
 	util.Assert(err == nil, "")
-	util.Assert(len(items) == 20, "")
+	util.Assert(len(items) == 21, "")
 
 	// 分钟数据
 	err, data := ds.GetData(security, period1)
@@ -62,7 +63,7 @@ func TestTdxDataSource(t *testing.T) {
 	// 日线数据
 	err, data = ds.GetData(security, period3)
 	util.Assert(err == nil, "")
-	util.Assert(len(data) == 6018, "")
+	util.Assert(len(data) == 1571, fmt.Sprintf("got %d", len(data)))
 
 	err, data = ds.GetRangeData(security, period3, startDate, endDate)
 	util.Assert(err == nil, "")
@@ -78,10 +79,13 @@ func TestTdxDataSource(t *testing.T) {
 	util.Assert(len(data) == 368, "")
 
 	// 日线数据前复权
-	err, data = ds.GetForwardAdjustedData(security, period3)
+	//startDate1, err := date.DayString2Timestamp("20170720")
+	//util.Assert(err == nil, "")
+	//
+	//endDate1, err := date.DayString2Timestamp("20170721")
+	//util.Assert(err == nil, "")
+
+	err, data = ds.GetForwardAdjustedRangeData(security, period3, 0, 0)
 	util.Assert(err == nil, "")
-	util.Assert(len(data) == 6018, "")
-	for i := range data {
-		log.Debug(data[i].String())
-	}
+	util.Assert(len(data) == 1571, "")
 }
