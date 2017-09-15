@@ -36,7 +36,7 @@ func (this *Record) Eq(that *Record) bool {
 	this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
 }
 
-func (this *Record) GetDateString() string {
+func (this *Record) GetDate() string {
 	return date.Timestamp2SecondString(this.Date)
 }
 
@@ -65,7 +65,7 @@ func (this *Record) GetVolume() float32 {
 }
 
 func (this *Record) String() string {
-	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDateString(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
+	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
 }
 
 func RecordFromBytes(data []byte, r *Record) error {
