@@ -22,6 +22,7 @@ const (
 type Period interface {
 	Name() string
 	ShortName() string
+	DisplayName() string
 	Unit() PeriodUnit
 	UnitCount() int
 	Eq(other Period) bool
@@ -114,6 +115,39 @@ func (this *period) ShortName() string {
 		return fmt.Sprintf("Q%d", this.unitCount)
 	case PERIOD_UNIT_YEAR:
 		return fmt.Sprintf("Y%d", this.unitCount)
+	}
+	return ""
+}
+
+func (this *period) DisplayName() string {
+	switch (this.unit) {
+	case PERIOD_UNIT_MINUTE:
+		return fmt.Sprintf("%d分钟", this.unitCount)
+	case PERIOD_UNIT_DAY:
+		if this.unitCount == 1 {
+			return "日线"
+		}
+		return fmt.Sprintf("%d日线", this.unitCount)
+	case PERIOD_UNIT_WEEK:
+		if this.unitCount == 1 {
+			return "周线"
+		}
+		return fmt.Sprintf("%d周线", this.unitCount)
+	case PERIOD_UNIT_MONTH:
+		if this.unitCount == 1 {
+			return "月线"
+		}
+		return fmt.Sprintf("%d月线", this.unitCount)
+	case PERIOD_UNIT_QUARTER:
+		if this.unitCount == 1 {
+			return "季线"
+		}
+		return fmt.Sprintf("%d季线", this.unitCount)
+	case PERIOD_UNIT_YEAR:
+		if this.unitCount == 1 {
+			return "年线"
+		}
+		return fmt.Sprintf("%d年线", this.unitCount)
 	}
 	return ""
 }

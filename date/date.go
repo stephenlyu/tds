@@ -26,6 +26,11 @@ func GetDateWeek(date uint64) int {
 	return y * 100 + week
 }
 
+func GetDateWeekDay(date uint64) int {
+	d := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond)).In(tds.Local)
+	return int(d.Weekday())
+}
+
 func GetDateMonth(date uint64) int {
 	d := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond)).In(tds.Local)
 	return d.Year() * 100 + int(d.Month())
