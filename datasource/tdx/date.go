@@ -3,9 +3,10 @@ package tdxdatasource
 import (
 	"time"
 	. "github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds"
 )
 
-var local, _ = time.LoadLocation("Asia/Shanghai")
+var local = tds.Local
 
 func MinuteDateToTimestamp(v uint32) uint64 {
 	dayValue := uint16(v & 0xFFFF)

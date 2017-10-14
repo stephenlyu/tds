@@ -1,8 +1,20 @@
 package tds
 
-import "time"
+import (
+	"time"
+	"runtime"
+)
 
-var Local, _ = time.LoadLocation("Asia/Shanghai")
+var Local *time.Location
+
+func init() {
+	if runtime.GOOS == "windows" {
+		// FIXME:
+		Local = time.Local
+	} else {
+		Local, _ = time.LoadLocation("Asia/Shanghai")
+	}
+}
 
 func SetLocationName(name string) error {
 	l, err := time.LoadLocation(name)
