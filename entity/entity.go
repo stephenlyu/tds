@@ -36,6 +36,10 @@ func (this *Record) Eq(that *Record) bool {
 	this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
 }
 
+func (this *Record) GetUTCDate() uint64 {
+	return this.Date
+}
+
 func (this *Record) GetDate() string {
 	return date.Timestamp2SecondString(this.Date)
 }
