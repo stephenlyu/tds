@@ -63,6 +63,7 @@ type tdxDataSource struct {
 	lock             sync.Mutex
 	stockCodeCache   map[string][]string
 	stockNameHistory map[string][]StockNameItem
+	stockNames		 map[string]string
 }
 
 func NewDataSource(dsDir string, needBuildCache bool) DataSource {
@@ -181,6 +182,60 @@ func (this *tdxDataSource) GetStockNameHistory(security *Security) []StockNameIt
 	}
 
 	return this.stockNameHistory[security.Code]
+}
+
+func (this *tdxDataSource) GetStockName(security *Security) string {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+
+	if this.stockNames != nil {
+		return this.stockNames[security.Code]
+	}
+
+	this.stockNames = make(map[string]string)
+
+	// Load stock names
+	filePath := filepath.Join(this.ConfigDir, "hq_cache/names.dat")
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Errorf("tdxDataSource.GetStockName read file fail, error: %+v", err)
+		return ""
+	}
+
+	elemSize := 29
+
+	end := len(bytes) / elemSize * elemSize
+
+	gbkDecoder := simplifiedchinese.GBK.NewDecoder()
+
+	for i := 0; i < end; i += elemSize {
+		r := bytes[i:i+elemSize]
+
+		code := string(r[0:6])
+		var nameGBKBytes []byte
+		for j := 8; j < 16; j++ {
+			if r[j] == 0 {
+				nameGBKBytes = r[8:j]
+				break
+			}
+		}
+		if nameGBKBytes == nil {
+			nameGBKBytes = r[8:16]
+		}
+
+		nameBytes := make([]byte, 30)
+
+		nDest, _, err := gbkDecoder.Transform(nameBytes, nameGBKBytes, true)
+		if err != nil {
+			log.Errorf("tdxDataSource.GetStockName, decode name fail, error: %v", err)
+			continue
+		}
+
+		name := string(nameBytes[:nDest])
+		this.stockNames[code] = name
+	}
+
+	return this.stockNames[security.Code]
 }
 
 func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExItem){

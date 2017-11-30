@@ -114,3 +114,14 @@ func TestTdxDataSource_GetStockNameHistory(t *testing.T) {
 		fmt.Printf("%s, %+v\n", code, items)
 	}
 }
+
+func TestTdxDataSource_GetStockName(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	codes := ds.GetStockCodes("sz")
+
+	for _, code := range codes {
+		security, _ := entity.ParseSecurity(code)
+		name := ds.GetStockName(security)
+		fmt.Printf("%s, %+v\n", code, name)
+	}
+}
