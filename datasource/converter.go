@@ -330,7 +330,6 @@ func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
 		fPrice := float32(price) / 1000.0
 		ret := int32(((fPrice - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares) * 10000.0)
 		ret = (ret + 5) / 10
-		log.Println(price, ret, item.Bonus, item.RationedShares, item.RationedSharePrice, item.DeliveredShares, item.RationedShares)
 		return ret
 	}
 
