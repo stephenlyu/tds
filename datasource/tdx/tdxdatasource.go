@@ -14,6 +14,14 @@ import (
 	"strings"
 	"fmt"
 	"github.com/z-ray/log"
+	"regexp"
+	"sync"
+	"golang.org/x/text/encoding/simplifiedchinese"
+	"encoding/binary"
+)
+
+var (
+	linefeedPattern, _ = regexp.Compile("(\r\n|\r|\n)")
 )
 
 var periodNameMap = map[string]string {
@@ -34,24 +42,150 @@ var fileNameSuffixMap = map[string]string {
 	"DAY1": ".day",
 }
 
-type tdxDataSource struct {
-	Root string
-	NeedBuildCache bool
+var exchangeBlockMap = map[string]string {
+	"SZ": "0",
+	"SH": "1",
+}
+var blockExchangeMap = map[string]string {
+	"0": "SZ",
+	"1": "SH",
+}
 
-	InfoEx map[string][]InfoExItem
+
+type tdxDataSource struct {
+	DataDir          string
+	ConfigDir        string
+
+	NeedBuildCache   bool
+
+	InfoEx           map[string][]InfoExItem
+
+	lock             sync.Mutex
+	stockCodeCache   map[string][]string
+	stockNameHistory map[string][]StockNameItem
 }
 
 func NewDataSource(dsDir string, needBuildCache bool) DataSource {
-	return &tdxDataSource{Root: dsDir, NeedBuildCache: needBuildCache}
+	return &tdxDataSource{
+		DataDir: filepath.Join(dsDir, "vipdoc"),
+		ConfigDir: filepath.Join(dsDir, "T0002"),
+		NeedBuildCache: needBuildCache,
+
+		stockCodeCache: make(map[string][]string),
+	}
 }
 
 func (this *tdxDataSource) Reset() {
 	this.InfoEx = nil
 }
 
+func (this *tdxDataSource) GetStockCodes(exchange string) []string {
+	exchange = strings.ToUpper(exchange)
+
+	block, ok := exchangeBlockMap[exchange]
+	if !ok {
+		return nil
+	}
+
+	this.lock.Lock()
+	defer this.lock.Unlock()
+	if ret, ok := this.stockCodeCache[block]; ok {
+		return ret
+	}
+
+	filePath := filepath.Join(this.ConfigDir, "hq_cache/tipinfo.dat")
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Errorf("tdxDataSource.GetStockCodes read file fail, error: %+v", err)
+	}
+
+	bytes = linefeedPattern.ReplaceAll(bytes, []byte("\n"))
+	lines := strings.Split(string(bytes), "\n")
+
+	for _, line := range lines {
+		line = strings.TrimSpace(line)
+		if line == "" {
+			continue
+		}
+		parts := strings.Split(line, "|")
+		block := parts[0]
+		if _, ok := blockExchangeMap[block]; !ok {
+			continue
+		}
+
+		code := parts[1]
+
+		this.stockCodeCache[block] = append(this.stockCodeCache[block], fmt.Sprintf("%s.%s", code, blockExchangeMap[block]))
+	}
+
+	return this.stockCodeCache[block]
+}
+
+func (this *tdxDataSource) GetStockNameHistory(security *Security) []StockNameItem {
+	this.lock.Lock()
+	defer this.lock.Unlock()
+
+	if this.stockNameHistory != nil {
+		return this.stockNameHistory[security.Code]
+	}
+
+	this.stockNameHistory = make(map[string][]StockNameItem)
+
+	// Load stock names
+	filePath := filepath.Join(this.ConfigDir, "hq_cache/profile.dat")
+	bytes, err := ioutil.ReadFile(filePath)
+	if err != nil {
+		log.Errorf("tdxDataSource.GetStockNameHistory read file fail, error: %+v", err)
+		return nil
+	}
+
+	elemSize := 64
+
+	end := len(bytes) / elemSize * elemSize
+
+	fmt.Println(len(bytes) / elemSize)
+
+	gbkDecoder := simplifiedchinese.GBK.NewDecoder()
+
+	for i := 0; i < end; i += elemSize {
+		r := bytes[i:i+elemSize]
+
+		code := string(r[1:7])
+		nameGBKBytes := r[8:17]
+
+		for j := len(nameGBKBytes) - 1; j >= 0; j-- {
+			if nameGBKBytes[j] != 0 {
+				nameGBKBytes = nameGBKBytes[:j+1]
+				break
+			}
+		}
+
+		nameBytes := make([]byte, 30)
+
+		nDest, _, err := gbkDecoder.Transform(nameBytes, nameGBKBytes, true)
+		if err != nil {
+			log.Errorf("tdxDataSource.GetStockNameHistory, decode name fail, error: %v", err)
+			continue
+		}
+
+		name := string(nameBytes[:nDest])
+		date := binary.LittleEndian.Uint32(r[17:21])
+
+		this.stockNameHistory[code] = append(this.stockNameHistory[code], StockNameItem{date, name})
+	}
+
+	for _, items := range this.stockNameHistory {
+		sort.SliceStable(items, func (i, j int) bool {
+			return items[i].Date > items[j].Date
+		})
+	}
+
+	return this.stockNameHistory[security.Code]
+}
+
 func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExItem){
 	if this.InfoEx == nil {
-		filePath := filepath.Join(this.Root, "infoex.dat")
+		filePath := filepath.Join(this.DataDir, "infoex.dat")
 
 		bytes, err := ioutil.ReadFile(filePath)
 		if err != nil {
@@ -69,7 +203,7 @@ func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExIt
 
 func (this *tdxDataSource) SetInfoEx(infoEx map[string][]InfoExItem) error {
 	this.InfoEx = infoEx
-	filePath := filepath.Join(this.Root, "infoex.dat")
+	filePath := filepath.Join(this.DataDir, "vipdoc/infoex.dat")
 
 	bytes, err := json.Marshal(this.InfoEx)
 	if err != nil {
@@ -86,7 +220,7 @@ func (this *tdxDataSource) GetData(security *Security, period Period) (error, []
 func (this *tdxDataSource) getDataFile(security *Security, period Period) (Period, string) {
 	code := SecurityToString(security)
 
-	root := filepath.Join(this.Root, strings.ToLower(security.Exchange))
+	root := filepath.Join(this.DataDir, strings.ToLower(security.Exchange))
 
 	files, err := ioutil.ReadDir(root)
 	if err != nil {
@@ -326,7 +460,7 @@ func (this *tdxDataSource) AppendData(security *Security, period Period, data []
 	}
 
 	code := SecurityToString(security)
-	filePath := filepath.Join(this.Root, period.ShortName(), code)
+	filePath := filepath.Join(this.DataDir, period.ShortName(), code)
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -371,7 +505,7 @@ func (this *tdxDataSource) SaveData(security *Security, period Period, data []Re
 		return errors.New("bad data")
 	}
 
-	filePath := filepath.Join(this.Root, period.ShortName(), SecurityToString(security))
+	filePath := filepath.Join(this.DataDir, period.ShortName(), SecurityToString(security))
 
 	file, err := os.Create(filePath)
 	if err != nil {

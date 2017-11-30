@@ -89,3 +89,28 @@ func TestTdxDataSource(t *testing.T) {
 	util.Assert(err == nil, "")
 	util.Assert(len(data) == 1571, "")
 }
+
+func TestTdxDataSource_GetStockCodes(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	stockCodes := ds.GetStockCodes("sz")
+	fmt.Println(len(stockCodes))
+	//for _, c := range stockCodes {
+	//	fmt.Println(c)
+	//}
+	stockCodes = ds.GetStockCodes("sh")
+	fmt.Println(len(stockCodes))
+	//for _, c := range stockCodes {
+	//	fmt.Println(c)
+	//}
+}
+
+func TestTdxDataSource_GetStockNameHistory(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	codes := append(ds.GetStockCodes("sz"), ds.GetStockCodes("sh")...)
+
+	for _, code := range codes[:1] {
+		security, _ := entity.ParseSecurity(code)
+		items := ds.GetStockNameHistory(security)
+		fmt.Printf("%s, %+v\n", code, items)
+	}
+}

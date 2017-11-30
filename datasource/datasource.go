@@ -10,8 +10,18 @@ type InfoExDataSource interface {
 	SetInfoEx(infoEx map[string][]InfoExItem) error
 }
 
+type StockNameItem struct {
+	Date uint32
+	Name string
+}
+
 type DataSource interface {
 	InfoExDataSource
+
+	// market - 市场代码, sz-深交所， sh-上交所
+	GetStockCodes(exchange string) []string
+	GetStockNameHistory(security *Security) []StockNameItem
+
 	Reset()
 
 	GetData(security *Security, period Period) (error, []Record)
