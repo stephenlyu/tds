@@ -374,7 +374,7 @@ func (this *tdxDataSource) GetRangeData(security *Security, period Period, start
 
 	marshaller := NewMarshaller(period)
 
-	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err, nil
@@ -427,7 +427,7 @@ func (this *tdxDataSource) GetDataFromLast(security *Security, period Period, en
 
 	marshaller := NewMarshaller(period)
 
-	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err, nil
@@ -476,7 +476,7 @@ func (this *tdxDataSource) GetLastRecord(security *Security, period Period) (err
 
 	marshaller := NewMarshaller(period)
 
-	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	err, recordCount := reader.Count()
 	if err != nil {
 		return err, nil
@@ -567,7 +567,7 @@ func (this *tdxDataSource) AppendData(security *Security, period Period, data []
 	marshaller := NewMarshaller(period)
 	err, fromIndex := this.truncateIf(file, marshaller, period, &data[0])
 
-	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
+	writer := NewRecordWriter(file, TDX_RECORD_SIZE, marshaller)
 	return writer.Write(fromIndex, data)
 }
 
@@ -593,12 +593,12 @@ func (this *tdxDataSource) SaveData(security *Security, period Period, data []Re
 	defer file.Close()
 
 	marshaller := NewMarshaller(period)
-	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
+	writer := NewRecordWriter(file, TDX_RECORD_SIZE, marshaller)
 	return writer.Write(0, data)
 }
 
 func (this tdxDataSource) checkRawData(data []byte) bool {
-	if len(data) % TDX_RECORD_SIZSE != 0 {
+	if len(data) % TDX_RECORD_SIZE != 0 {
 		return false
 	}
 
@@ -606,7 +606,7 @@ func (this tdxDataSource) checkRawData(data []byte) bool {
 }
 
 func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller, period Period, r *Record) (err error, fromIndex int) {
-	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	var count int
 	err, count = reader.Count()
 	if err != nil {
@@ -626,7 +626,7 @@ func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller
 		return
 	}
 	if fromIndex <= count {
-		err = file.Truncate(int64(fromIndex * TDX_RECORD_SIZSE))
+		err = file.Truncate(int64(fromIndex * TDX_RECORD_SIZE))
 		if err != nil {
 			return
 		}
@@ -657,10 +657,10 @@ func (this *tdxDataSource) AppendRawData(security *Security, period Period, data
 
 	marshaller := NewMarshaller(period)
 	var r Record
-	marshaller.FromBytes(data[:TDX_RECORD_SIZSE], &r)
+	marshaller.FromBytes(data[:TDX_RECORD_SIZE], &r)
 
 	err, fromIndex := this.truncateIf(file, marshaller, period, &r)
 
-	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
+	writer := NewRecordWriter(file, TDX_RECORD_SIZE, marshaller)
 	return writer.WriteRaw(fromIndex, data)
 }

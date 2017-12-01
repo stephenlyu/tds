@@ -184,10 +184,10 @@ func TestTdxDataSource_AppendRawData(t *testing.T) {
 	fmt.Printf("record count: %d\n", len(records))
 
 	marshaller := tdxdatasource.NewMarshaller(period)
-	raw := make([]byte, len(records) * tdxdatasource.TDX_RECORD_SIZSE)
+	raw := make([]byte, len(records) * tdxdatasource.TDX_RECORD_SIZE)
 	for i := range records {
-		start := i * tdxdatasource.TDX_RECORD_SIZSE
-		end := start + tdxdatasource.TDX_RECORD_SIZSE
+		start := i * tdxdatasource.TDX_RECORD_SIZE
+		end := start + tdxdatasource.TDX_RECORD_SIZE
 		bytes, _ := marshaller.ToBytes(&records[i])
 		copy(raw[start:end], bytes)
 	}
@@ -200,26 +200,26 @@ func TestTdxDataSource_AppendRawData(t *testing.T) {
 	util.Assert(eqRecords(records, records1), "")
 
 	// Overlap case
-	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZSE])
+	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZE])
 	util.Assert(err == nil, fmt.Sprintf("%v", err))
 
 	_, records1 = ds1.GetData(security, period)
 	util.Assert(eqRecords(records[:1000], records1), "")
 
-	err = ds1.AppendRawData(security, period, raw[900*tdxdatasource.TDX_RECORD_SIZSE:])
+	err = ds1.AppendRawData(security, period, raw[900*tdxdatasource.TDX_RECORD_SIZE:])
 	util.Assert(err == nil, fmt.Sprintf("%v", err))
 
 	_, records1 = ds1.GetData(security, period)
 	util.Assert(eqRecords(records, records1), "")
 
 	// Normal Case
-	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZSE])
+	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZE])
 	util.Assert(err == nil, fmt.Sprintf("%v", err))
 
 	_, records1 = ds1.GetData(security, period)
 	util.Assert(eqRecords(records[:1000], records1), "")
 
-	err = ds1.AppendRawData(security, period, raw[1000*tdxdatasource.TDX_RECORD_SIZSE:])
+	err = ds1.AppendRawData(security, period, raw[1000*tdxdatasource.TDX_RECORD_SIZE:])
 	util.Assert(err == nil, fmt.Sprintf("%v", err))
 
 	_, records1 = ds1.GetData(security, period)

@@ -23,10 +23,10 @@ type TDXRecord struct {
 	Pad int32
 }
 
-const TDX_RECORD_SIZSE = int(unsafe.Sizeof(TDXRecord{}))
+const TDX_RECORD_SIZE = int(unsafe.Sizeof(TDXRecord{}))
 
 func TDXRecordFromBytes(p period.Period, data []byte, r *TDXRecord) error {
-	if len(data) != TDX_RECORD_SIZSE {
+	if len(data) != TDX_RECORD_SIZE {
 		return errors.New("less record bytes")
 	}
 
@@ -57,7 +57,7 @@ func TDXRecordFromBytes(p period.Period, data []byte, r *TDXRecord) error {
 }
 
 func (this *TDXRecord) Bytes(p period.Period) []byte {
-	ret := make([]byte, TDX_RECORD_SIZSE)
+	ret := make([]byte, TDX_RECORD_SIZE)
 
 	if p.Unit() == period.PERIOD_UNIT_MINUTE {
 		binary.LittleEndian.PutUint32(ret[0:4], this.Date)
