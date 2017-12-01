@@ -117,7 +117,7 @@ func TestTdxDataSource_GetStockNameHistory(t *testing.T) {
 
 func TestTdxDataSource_GetStockName(t *testing.T) {
 	ds := tdxdatasource.NewDataSource("data", true)
-	codes := ds.GetStockCodes("sz")
+	codes := append(ds.GetStockCodes("sz"), ds.GetStockCodes("sh")...)
 
 	for _, code := range codes {
 		security, _ := entity.ParseSecurity(code)
