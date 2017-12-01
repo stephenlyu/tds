@@ -127,6 +127,16 @@ func TestTdxDataSource_GetStockName(t *testing.T) {
 	}
 }
 
+func TestTdxDataSource_GetStockNames(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+
+	names := ds.GetStockNames()
+
+	for k, v := range names {
+		fmt.Printf("%s, %+v\n", k, v)
+	}
+}
+
 func TestTdxDataSource_GetLastRecord(t *testing.T) {
 	ds := tdxdatasource.NewDataSource("data", true)
 	security, _ := entity.ParseSecurity("000001.SZ")

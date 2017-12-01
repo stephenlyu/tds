@@ -247,6 +247,16 @@ func (this *tdxDataSource) GetStockName(security *Security) string {
 	return this.stockNames[security.String()]
 }
 
+func (this *tdxDataSource) GetStockNames() map[string]string {
+	this.ensureStockNames()
+
+	ret := make(map[string]string)
+	for k, v := range this.stockNames {
+		ret[k] = v
+	}
+	return ret
+}
+
 func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExItem){
 	if this.InfoEx == nil {
 		filePath := filepath.Join(this.DataDir, "infoex.dat")

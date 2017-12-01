@@ -22,6 +22,7 @@ type DataSource interface {
 	GetStockCodes(exchange string) []string
 	GetStockNameHistory(security *Security) []StockNameItem
 	GetStockName(security *Security) string
+	GetStockNames() map[string]string
 
 	Reset()
 
