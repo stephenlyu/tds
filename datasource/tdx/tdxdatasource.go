@@ -184,58 +184,67 @@ func (this *tdxDataSource) GetStockNameHistory(security *Security) []StockNameIt
 	return this.stockNameHistory[security.Code]
 }
 
-func (this *tdxDataSource) GetStockName(security *Security) string {
+func (this *tdxDataSource) ensureStockNames() {
 	this.lock.Lock()
 	defer this.lock.Unlock()
 
 	if this.stockNames != nil {
-		return this.stockNames[security.Code]
+		return
 	}
 
 	this.stockNames = make(map[string]string)
 
-	// Load stock names
-	filePath := filepath.Join(this.ConfigDir, "hq_cache/names.dat")
-	bytes, err := ioutil.ReadFile(filePath)
-	if err != nil {
-		log.Errorf("tdxDataSource.GetStockName read file fail, error: %+v", err)
-		return ""
-	}
-
-	elemSize := 29
-
-	end := len(bytes) / elemSize * elemSize
-
-	gbkDecoder := simplifiedchinese.GBK.NewDecoder()
-
-	for i := 0; i < end; i += elemSize {
-		r := bytes[i:i+elemSize]
-
-		code := string(r[0:6])
-		var nameGBKBytes []byte
-		for j := 8; j < 16; j++ {
-			if r[j] == 0 {
-				nameGBKBytes = r[8:j]
-				break
-			}
-		}
-		if nameGBKBytes == nil {
-			nameGBKBytes = r[8:16]
-		}
-
-		nameBytes := make([]byte, 30)
-
-		nDest, _, err := gbkDecoder.Transform(nameBytes, nameGBKBytes, true)
+	loadExchangeNames := func (exchange string) {
+		// Load stock names
+		filePath := filepath.Join(this.ConfigDir, fmt.Sprintf("hq_cache/%s-names.dat", exchange))
+		bytes, err := ioutil.ReadFile(filePath)
 		if err != nil {
-			log.Errorf("tdxDataSource.GetStockName, decode name fail, error: %v", err)
-			continue
+			log.Errorf("tdxDataSource.GetStockName read file fail, error: %+v", err)
+			return
 		}
 
-		name := string(nameBytes[:nDest])
-		this.stockNames[code] = name
+		elemSize := 29
+
+		end := len(bytes) / elemSize * elemSize
+
+		gbkDecoder := simplifiedchinese.GBK.NewDecoder()
+
+		for i := 0; i < end; i += elemSize {
+			r := bytes[i:i+elemSize]
+
+			code := string(r[0:6])
+			var nameGBKBytes []byte
+			for j := 8; j < 16; j++ {
+				if r[j] == 0 {
+					nameGBKBytes = r[8:j]
+					break
+				}
+			}
+			if nameGBKBytes == nil {
+				nameGBKBytes = r[8:16]
+			}
+
+			nameBytes := make([]byte, 30)
+
+			nDest, _, err := gbkDecoder.Transform(nameBytes, nameGBKBytes, true)
+			if err != nil {
+				log.Errorf("tdxDataSource.GetStockName, decode name fail, error: %v", err)
+				continue
+			}
+
+			name := string(nameBytes[:nDest])
+			fullCode := fmt.Sprintf("%s.%s", code, strings.ToUpper(exchange))
+			this.stockNames[fullCode] = name
+		}
 	}
 
-	return this.stockNames[security.Code]
+	loadExchangeNames("sh")
+	loadExchangeNames("sz")
+}
+
+func (this *tdxDataSource) GetStockName(security *Security) string {
+	this.ensureStockNames()
+	return this.stockNames[security.String()]
 }
 
 func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExItem){
