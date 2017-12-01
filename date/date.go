@@ -92,3 +92,12 @@ func ToDayString(t time.Time) string {
 	t = t.In(tds.Local)
 	return t.Format(DAY_FORMAT)
 }
+
+func GetTodayInt() int {
+	return ToDayInt(time.Now())
+}
+
+func ToDayInt(t time.Time) int {
+	t = t.In(tds.Local)
+	return t.Year() * 10000 + int(t.Month()) * 100 + t.Day()
+}

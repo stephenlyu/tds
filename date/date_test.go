@@ -16,4 +16,5 @@ func TestDate(t *testing.T) {
 	fmt.Println(date.GetDateQuarter(now))
 	fmt.Println(date.GetNowString())
 	fmt.Println(date.GetTodayString())
+	fmt.Println(date.GetTodayInt())
 }
