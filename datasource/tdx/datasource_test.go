@@ -9,6 +9,7 @@ import (
 	"github.com/z-ray/log"
 	"github.com/stephenlyu/tds/date"
 	"fmt"
+	"os"
 )
 
 func TestTdxDataSource(t *testing.T) {
@@ -124,4 +125,103 @@ func TestTdxDataSource_GetStockName(t *testing.T) {
 		name := ds.GetStockName(security)
 		fmt.Printf("%s, %+v\n", code, name)
 	}
+}
+
+func TestTdxDataSource_GetLastRecord(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	security, _ := entity.ParseSecurity("000001.SZ")
+	_, period := period.PeriodFromString("D1")
+	err, r := ds.GetLastRecord(security, period)
+	util.Assert(err == nil, "")
+	fmt.Printf("%+v\n", r)
+}
+
+var eqRecords = func(rs1, rs2 []entity.Record) bool {
+	if len(rs1) != len(rs2) {
+		return false
+	}
+
+	for i := range rs1 {
+		if !rs1[i].Eq(&rs2[i]) {
+			return false
+		}
+	}
+	return true
+}
+
+func TestTdxDataSource_AppendData(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	os.RemoveAll("temp")
+
+	ds1 := tdxdatasource.NewDataSource("temp", true)
+
+	security, _ := entity.ParseSecurity("000001.SZ")
+	_, period := period.PeriodFromString("D1")
+
+	err, records := ds.GetData(security, period)
+	util.Assert(err == nil, "")
+	fmt.Printf("record count: %d\n", len(records))
+
+	err = ds1.AppendData(security, period, records)
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 := ds1.GetData(security, period)
+	util.Assert(eqRecords(records, records1), "")
+
+}
+
+func TestTdxDataSource_AppendRawData(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	os.RemoveAll("temp")
+
+	ds1 := tdxdatasource.NewDataSource("temp", true)
+
+	security, _ := entity.ParseSecurity("000001.SZ")
+	_, period := period.PeriodFromString("D1")
+
+	err, records := ds.GetData(security, period)
+	util.Assert(err == nil, "")
+	fmt.Printf("record count: %d\n", len(records))
+
+	marshaller := tdxdatasource.NewMarshaller(period)
+	raw := make([]byte, len(records) * tdxdatasource.TDX_RECORD_SIZSE)
+	for i := range records {
+		start := i * tdxdatasource.TDX_RECORD_SIZSE
+		end := start + tdxdatasource.TDX_RECORD_SIZSE
+		bytes, _ := marshaller.ToBytes(&records[i])
+		copy(raw[start:end], bytes)
+	}
+
+	// Append All
+	err = ds1.AppendRawData(security, period, raw)
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 := ds1.GetData(security, period)
+	util.Assert(eqRecords(records, records1), "")
+
+	// Overlap case
+	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZSE])
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 = ds1.GetData(security, period)
+	util.Assert(eqRecords(records[:1000], records1), "")
+
+	err = ds1.AppendRawData(security, period, raw[900*tdxdatasource.TDX_RECORD_SIZSE:])
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 = ds1.GetData(security, period)
+	util.Assert(eqRecords(records, records1), "")
+
+	// Normal Case
+	err = ds1.AppendRawData(security, period, raw[:1000*tdxdatasource.TDX_RECORD_SIZSE])
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 = ds1.GetData(security, period)
+	util.Assert(eqRecords(records[:1000], records1), "")
+
+	err = ds1.AppendRawData(security, period, raw[1000*tdxdatasource.TDX_RECORD_SIZSE:])
+	util.Assert(err == nil, fmt.Sprintf("%v", err))
+
+	_, records1 = ds1.GetData(security, period)
+	util.Assert(eqRecords(records, records1), "")
 }

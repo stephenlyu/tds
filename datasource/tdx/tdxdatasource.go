@@ -272,6 +272,12 @@ func (this *tdxDataSource) GetData(security *Security, period Period) (error, []
 	return this.GetRangeData(security, period, 0, 0)
 }
 
+func (this *tdxDataSource) getStrictDataFile(security *Security, period Period) string {
+	code := SecurityToString(security)
+	root := filepath.Join(this.DataDir, strings.ToLower(security.Exchange))
+	return filepath.Join(root, periodNameReMap[period.Name()], fmt.Sprintf("%s%s", code, fileNameSuffixMap[period.Name()]))
+}
+
 func (this *tdxDataSource) getDataFile(security *Security, period Period) (Period, string) {
 	code := SecurityToString(security)
 
@@ -456,6 +462,38 @@ func (this *tdxDataSource) GetDataFromLast(security *Security, period Period, en
 	return nil, converter.Convert(records)
 }
 
+func (this *tdxDataSource) GetLastRecord(security *Security, period Period) (error, *Record) {
+	dataFile := this.getStrictDataFile(security, period)
+	if dataFile == "" {
+		return errors.New("data file not found"), nil
+	}
+
+	file, err := os.Open(dataFile)
+	if err != nil {
+		return err, nil
+	}
+	defer file.Close()
+
+	marshaller := NewMarshaller(period)
+
+	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	err, recordCount := reader.Count()
+	if err != nil {
+		return err, nil
+	}
+
+	err, records := reader.Read(recordCount - 1, recordCount)
+	if err != nil {
+		return err, nil
+	}
+
+	if len(records) == 0 {
+		return nil, nil
+	}
+
+	return nil, &records[0]
+}
+
 func (this *tdxDataSource) GetForwardAdjustedData(security *Security, period Period) (error, []Record) {
 	return this.GetForwardAdjustedRangeData(security, period, 0, 0)
 }
@@ -514,8 +552,12 @@ func (this *tdxDataSource) AppendData(security *Security, period Period, data []
 		return errors.New("bad data")
 	}
 
-	code := SecurityToString(security)
-	filePath := filepath.Join(this.DataDir, period.ShortName(), code)
+	filePath := this.getStrictDataFile(security, period)
+	if filePath == "" {
+		return errors.New("period not supported")
+	}
+	os.MkdirAll(filepath.Dir(filePath), 0777)
+
 	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0666)
 	if err != nil {
 		return err
@@ -523,32 +565,10 @@ func (this *tdxDataSource) AppendData(security *Security, period Period, data []
 	defer file.Close()
 
 	marshaller := NewMarshaller(period)
-	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
-	err, recordCount := reader.Count()
-	if err != nil {
-		return err
-	}
-	if recordCount > 0 {
-		err, records := reader.Read(recordCount - 1, recordCount)
-		if err != nil {
-			return err
-		}
-		if len(records) == 0 {
-			return errors.New("no data read")
-		}
-		lastDate := records[0].Date
-
-		for i := 0; i < len(data); i++ {
-			r := data[i]
-			if r.Date > lastDate {
-				data = data[i:]
-				break
-			}
-		}
-	}
+	err, fromIndex := this.truncateIf(file, marshaller, period, &data[0])
 
 	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
-	return writer.Write(recordCount, data)
+	return writer.Write(fromIndex, data)
 }
 
 func (this *tdxDataSource) SaveData(security *Security, period Period, data []Record) error {
@@ -560,7 +580,11 @@ func (this *tdxDataSource) SaveData(security *Security, period Period, data []Re
 		return errors.New("bad data")
 	}
 
-	filePath := filepath.Join(this.DataDir, period.ShortName(), SecurityToString(security))
+	filePath := this.getStrictDataFile(security, period)
+	if filePath == "" {
+		return errors.New("period not supported")
+	}
+	os.MkdirAll(filepath.Dir(filePath), 0777)
 
 	file, err := os.Create(filePath)
 	if err != nil {
@@ -571,4 +595,72 @@ func (this *tdxDataSource) SaveData(security *Security, period Period, data []Re
 	marshaller := NewMarshaller(period)
 	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
 	return writer.Write(0, data)
+}
+
+func (this tdxDataSource) checkRawData(data []byte) bool {
+	if len(data) % TDX_RECORD_SIZSE != 0 {
+		return false
+	}
+
+	return true
+}
+
+func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller, period Period, r *Record) (err error, fromIndex int) {
+	reader := NewRecordReader(file, TDX_RECORD_SIZSE, marshaller)
+	var count int
+	err, count = reader.Count()
+	if err != nil {
+		if err == ERR_FILE_DAMAGED {
+			// File damaged, truncate it
+			err = file.Truncate(0)
+			if err != nil {
+				return
+			}
+		} else {
+			return
+		}
+	}
+
+	err, fromIndex, _ = this.binarySearchRecord(reader, period, r.Date, count)
+	if err != nil {
+		return
+	}
+	if fromIndex <= count {
+		err = file.Truncate(int64(fromIndex * TDX_RECORD_SIZSE))
+		if err != nil {
+			return
+		}
+	}
+	return
+}
+
+func (this *tdxDataSource) AppendRawData(security *Security, period Period, data []byte) error {
+	if len(data) == 0 {
+		return nil
+	}
+
+	if !this.checkRawData(data) {
+		return errors.New("bad data")
+	}
+
+	filePath := this.getStrictDataFile(security, period)
+	if filePath == "" {
+		return errors.New("period not supported")
+	}
+	os.MkdirAll(filepath.Dir(filePath), 0777)
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	marshaller := NewMarshaller(period)
+	var r Record
+	marshaller.FromBytes(data[:TDX_RECORD_SIZSE], &r)
+
+	err, fromIndex := this.truncateIf(file, marshaller, period, &r)
+
+	writer := NewRecordWriter(file, TDX_RECORD_SIZSE, marshaller)
+	return writer.WriteRaw(fromIndex, data)
 }

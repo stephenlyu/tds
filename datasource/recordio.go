@@ -8,6 +8,10 @@ import (
 	. "github.com/stephenlyu/tds/entity"
 )
 
+var (
+	ERR_FILE_DAMAGED = errors.New("file damaged")
+)
+
 type RecordMarshaller interface {
 	ToBytes(record *Record) ([]byte, error)
 	FromBytes(bytes []byte, record *Record) error
@@ -20,6 +24,7 @@ type RecordReader interface {
 
 type RecordWriter interface {
 	Write(from int, data []Record) error
+	WriteRaw(from int, data []byte) error
 }
 
 type recordReader struct {
@@ -79,11 +84,14 @@ func (this *recordReader) Read(start, end int) (error, []Record) {
 func (this *recordReader) Count() (error, int) {
 	stat, err := this.file.Stat()
 	if err != nil {
+		if os.IsNotExist(err) {
+			return nil, 0
+		}
 		return err, 0
 	}
 
 	if stat.Size() % int64(this.recordSize) != 0 {
-		return errors.New("file damaged"), 0
+		return ERR_FILE_DAMAGED, 0
 	}
 
 	return nil, int(stat.Size() / int64(this.recordSize))
@@ -100,7 +108,15 @@ func NewRecordWriter(file *os.File, recordSize int, marshaller RecordMarshaller)
 }
 
 func (this *recordWriter) Write(from int, data []Record) error {
-	this.file.Seek(int64(from) * int64(this.recordSize), os.SEEK_SET)
+	err := this.file.Truncate(int64(from) * int64(this.recordSize))
+	if err != nil {
+		return err
+	}
+
+	_, err = this.file.Seek(int64(from) * int64(this.recordSize), os.SEEK_SET)
+	if err != nil {
+		return err
+	}
 
 	writer := bufio.NewWriter(this.file)
 
@@ -114,6 +130,21 @@ func (this *recordWriter) Write(from int, data []Record) error {
 		if err != nil {
 			return err
 		}
+	}
+	return writer.Flush()
+}
+
+func (this *recordWriter) WriteRaw(from int, data []byte) error {
+	_, err := this.file.Seek(int64(from) * int64(this.recordSize), os.SEEK_SET)
+	if err != nil {
+		return err
+	}
+
+	writer := bufio.NewWriter(this.file)
+
+	_, err = writer.Write(data)
+	if err != nil {
+		return err
 	}
 	return writer.Flush()
 }
