@@ -25,6 +25,11 @@ func ParseSecurity(securityCode string) (*Security, error) {
 	return &Security{code, exchange}, nil
 }
 
+func ParseSecurityUnsafe(securityCode string) (*Security) {
+	ret, _ := ParseSecurity(securityCode)
+	return ret
+}
+
 func (this *Security) String() string {
 	return fmt.Sprintf("%s.%s", this.Code, this.Exchange)
 }
