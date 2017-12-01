@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"errors"
 	"fmt"
+	"strings"
 )
 
 type Security struct {
@@ -20,7 +21,7 @@ func ParseSecurity(securityCode string) (*Security, error) {
 	}
 
 	code := string(matches[1])
-	exchange := string(matches[2])
+	exchange := strings.ToUpper(string(matches[2]))
 	return &Security{code, exchange}, nil
 }
 
