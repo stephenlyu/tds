@@ -19,6 +19,15 @@ const (
 	PERIOD_UNIT_YEAR			// Y, YEAR
 )
 
+var (
+	_, PERIOD_M = PeriodFromString("M1")
+	_, PERIOD_M5 = PeriodFromString("M5")
+	_, PERIOD_M15 = PeriodFromString("M15")
+	_, PERIOD_M30 = PeriodFromString("M30")
+	_, PERIOD_M60 = PeriodFromString("M60")
+	_, PERIOD_D = PeriodFromString("D1")
+)
+
 type Period interface {
 	Name() string
 	ShortName() string
