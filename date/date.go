@@ -10,7 +10,10 @@ const SECOND_FORMAT = "20060102 15:04:05"
 const DAY_FORMAT = "20060102"
 
 func GetDayTimestamp(date uint64) uint64 {
-	return date / DAY_MILLISECONDS * DAY_MILLISECONDS
+	t := time.Unix(int64(date) / 1000, (int64(date) % 1000) * int64(time.Millisecond)).In(tds.Local)
+	d := time.Date(t.Year(), t.Month(), t.Day(), 0, 0, 0, 0, tds.Local)
+
+	return uint64(d.UnixNano() / int64(time.Millisecond))
 }
 
 func GetDateDay(date uint64) int {

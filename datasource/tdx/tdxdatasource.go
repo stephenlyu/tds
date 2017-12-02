@@ -391,7 +391,7 @@ func (this *tdxDataSource) GetRangeData(security *Security, period Period, start
 	}
 	defer file.Close()
 
-	marshaller := NewMarshaller(period)
+	marshaller := NewMarshaller(dataPeriod)
 
 	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	err, recordCount := reader.Count()
@@ -444,7 +444,7 @@ func (this *tdxDataSource) GetDataFromLast(security *Security, period Period, en
 	}
 	defer file.Close()
 
-	marshaller := NewMarshaller(period)
+	marshaller := NewMarshaller(dataPeriod)
 
 	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	err, recordCount := reader.Count()
