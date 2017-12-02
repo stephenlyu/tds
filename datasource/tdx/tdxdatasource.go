@@ -259,7 +259,7 @@ func (this *tdxDataSource) GetStockNames() map[string]string {
 
 func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExItem){
 	if this.InfoEx == nil {
-		filePath := filepath.Join(this.ConfigDir, "infoex.dat")
+		filePath := filepath.Join(this.ConfigDir, "hq_cache/infoex.dat")
 
 		bytes, err := ioutil.ReadFile(filePath)
 		if err != nil {
@@ -277,7 +277,7 @@ func (this *tdxDataSource) GetStockInfoEx(security *Security) (error, []InfoExIt
 
 func (this *tdxDataSource) SetInfoEx(infoEx map[string][]InfoExItem) error {
 	this.InfoEx = infoEx
-	filePath := filepath.Join(this.ConfigDir, "infoex.dat")
+	filePath := filepath.Join(this.ConfigDir, "hq_cache/infoex.dat")
 
 	bytes, err := json.Marshal(this.InfoEx)
 	if err != nil {
