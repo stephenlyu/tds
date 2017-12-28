@@ -81,6 +81,11 @@ func DayString2Timestamp(date string) (uint64, error) {
 	return uint64(t.UnixNano() / int64(time.Millisecond)), nil
 }
 
+func Tick() int64 {
+	t := time.Now()
+	return t.UnixNano() / int64(time.Millisecond)
+}
+
 func GetNowString() string {
 	t := time.Now()
 	t = t.In(tds.Local)
