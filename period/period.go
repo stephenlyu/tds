@@ -174,7 +174,7 @@ func (this *period) Eq(other Period) bool {
 }
 
 func (this *period) Lt(other Period) bool {
-	return this.Unit() < other.Unit() || this.Unit() > other.Unit() && this.UnitCount() < other.UnitCount()
+	return this.Unit() < other.Unit() || this.Unit() == other.Unit() && this.UnitCount() < other.UnitCount()
 }
 
 func (this *period) Gt(other Period) bool {
