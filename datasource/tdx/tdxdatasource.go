@@ -287,6 +287,10 @@ func (this *tdxDataSource) SetInfoEx(infoEx map[string][]InfoExItem) error {
 	return ioutil.WriteFile(filePath, bytes, 0666)
 }
 
+func (this *tdxDataSource) SupportedPeriods() []Period {
+	return []Period {PERIOD_M, PERIOD_M5, PERIOD_D}
+}
+
 func (this *tdxDataSource) GetData(security *Security, period Period) (error, []Record) {
 	return this.GetRangeData(security, period, 0, 0)
 }

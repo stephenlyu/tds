@@ -26,6 +26,8 @@ type DataSource interface {
 
 	Reset()
 
+	SupportedPeriods() []Period
+
 	GetData(security *Security, period Period) (error, []Record)
 	GetRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record)
 	GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record)

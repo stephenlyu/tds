@@ -6,6 +6,7 @@ import (
 	"errors"
 	"strconv"
 	"fmt"
+	"github.com/stephenlyu/tds/util"
 )
 
 type PeriodUnit int
@@ -26,6 +27,9 @@ var (
 	_, PERIOD_M30 = PeriodFromString("M30")
 	_, PERIOD_M60 = PeriodFromString("M60")
 	_, PERIOD_D = PeriodFromString("D1")
+	_, PERIOD_W = PeriodFromString("W1")
+	_, PERIOD_MONTH = PeriodFromString("N1")
+	_, PERIOD_Q = PeriodFromString("Q1")
 )
 
 type Period interface {
@@ -39,6 +43,8 @@ type Period interface {
 	Gt(other Period) bool
 	CanConvertTo(other Period) bool
 	CanConvertFrom(other Period) bool
+	BasicMergePeriod() Period
+	KLinePerDay(nMinutes int) int
 }
 
 type period struct {
@@ -248,4 +254,56 @@ func (this *period) CanConvertTo(other Period) bool {
 
 func (this *period) CanConvertFrom(other Period) bool {
 	return other.CanConvertTo(this)
+}
+
+func (this *period) BasicMergePeriod() Period {
+	switch this.Unit() {
+	case PERIOD_UNIT_MINUTE:
+		return PERIOD_M
+	case PERIOD_UNIT_DAY:
+		switch this.UnitCount() {
+		case 1:
+			return PERIOD_M
+		default:
+			return PERIOD_D
+		}
+	case PERIOD_UNIT_WEEK:
+		switch this.UnitCount() {
+		case 1:
+			return PERIOD_D
+		default:
+			return PERIOD_W
+		}
+	case PERIOD_UNIT_MONTH:
+		switch this.UnitCount() {
+		case 1:
+			return PERIOD_D
+		default:
+			return PERIOD_MONTH
+		}
+	case PERIOD_UNIT_QUARTER:
+		switch this.UnitCount() {
+		case 1:
+			return PERIOD_MONTH
+		default:
+			return PERIOD_Q
+		}
+	case PERIOD_UNIT_YEAR:
+		return PERIOD_D
+	}
+
+	util.Assert(false, "Unreachable code")
+	return nil
+}
+
+func (this *period) KLinePerDay(nMinutes int) int {
+	if nMinutes == 0 {
+		nMinutes = 240
+	}
+	switch this.Unit() {
+	case PERIOD_UNIT_MINUTE:
+		return (nMinutes + this.unitCount - 1) / this.unitCount
+	default:
+		return 1
+	}
 }
