@@ -36,7 +36,7 @@ func NewPeriodConverter(srcPeriod Period, destPeriod Period) Converter {
 	return &periodConverter{srcPeriod: srcPeriod, destPeriod: destPeriod}
 }
 
-func (this *periodConverter) doMerge(destData []Record, sourceData []Record, multiplier int) []Record {
+func MergeData(destData []Record, sourceData []Record, multiplier int) []Record {
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
 		if i % multiplier == 0 {
@@ -59,6 +59,11 @@ func (this *periodConverter) doMerge(destData []Record, sourceData []Record, mul
 		dr.Amount += r.Amount
 	}
 	return destData
+}
+
+
+func (this *periodConverter) doMerge(destData []Record, sourceData []Record, multiplier int) []Record {
+	return MergeData(destData, sourceData, multiplier)
 }
 
 func (this *periodConverter) convertMinute2Minute(sourceData []Record) []Record {
