@@ -30,6 +30,7 @@ var (
 	_, PERIOD_W = PeriodFromString("W1")
 	_, PERIOD_MONTH = PeriodFromString("N1")
 	_, PERIOD_Q = PeriodFromString("Q1")
+	_, PERIOD_Y = PeriodFromString("Y1")
 )
 
 type Period interface {
@@ -96,6 +97,11 @@ func PeriodFromString(periodStr string) (error, Period) {
 	}
 
 	return errors.New("bad period string"), nil
+}
+
+func PeriodFromStringUnsafe(periodStr string) Period {
+	_, ret := PeriodFromString(periodStr)
+	return ret
 }
 
 func (this *period) Name() string {
@@ -289,7 +295,12 @@ func (this *period) BasicMergePeriod() Period {
 			return PERIOD_Q
 		}
 	case PERIOD_UNIT_YEAR:
-		return PERIOD_D
+		switch this.UnitCount() {
+		case 1:
+			return PERIOD_D
+		default:
+			return PERIOD_Y
+		}
 	}
 
 	util.Assert(false, "Unreachable code")
