@@ -214,7 +214,7 @@ func (this *period) CanConvertTo(other Period) bool {
 	case PERIOD_UNIT_WEEK:
 		switch this.Unit() {
 		case PERIOD_UNIT_DAY:
-			return other.UnitCount() == 1
+			return this.UnitCount() == 1 && other.UnitCount() == 1
 		case PERIOD_UNIT_WEEK:
 			return other.UnitCount() % this.UnitCount() == 0
 		default:
@@ -223,7 +223,7 @@ func (this *period) CanConvertTo(other Period) bool {
 	case PERIOD_UNIT_MONTH:
 		switch this.Unit() {
 		case PERIOD_UNIT_DAY:
-			return other.UnitCount() == 1
+			return this.UnitCount() == 1 && other.UnitCount() == 1
 		case PERIOD_UNIT_MONTH:
 			return other.UnitCount() % this.UnitCount() == 0
 		default:
@@ -234,7 +234,7 @@ func (this *period) CanConvertTo(other Period) bool {
 		case PERIOD_UNIT_DAY:
 			fallthrough
 		case PERIOD_UNIT_MONTH:
-			return other.UnitCount() == 1
+			return this.UnitCount() == 1 && other.UnitCount() == 1
 		case PERIOD_UNIT_QUARTER:
 			return other.UnitCount() % this.UnitCount() == 0
 		default:
@@ -247,7 +247,7 @@ func (this *period) CanConvertTo(other Period) bool {
 		case PERIOD_UNIT_MONTH:
 			fallthrough
 		case PERIOD_UNIT_QUARTER:
-			return other.UnitCount() == 1
+			return this.UnitCount() == 1 && other.UnitCount() == 1
 		case PERIOD_UNIT_YEAR:
 			return other.UnitCount() % this.UnitCount() == 0
 		default:

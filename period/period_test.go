@@ -202,6 +202,8 @@ func TestPeriod(t *testing.T) {
 	//
 	//assert(py.CanConvertTo(py1) == py1.CanConvertFrom(py), "py.CanConvertTo(py1) == py1.CanConvertFrom(py)")
 
+	assert(!period.PeriodFromStringUnsafe("Q1").CanConvertFrom(period.PeriodFromStringUnsafe("D3")), "")
+
 	var m = make(map[period.Period]period.Period)
 
 	err, p2 := period.PeriodFromString("M1")

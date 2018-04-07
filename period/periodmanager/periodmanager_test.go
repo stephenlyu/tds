@@ -20,8 +20,9 @@ func outputPeriods(periods []Period) {
 }
 
 func TestDefaultPeriodManager_GetPeriodDependencies(t *testing.T) {
-	pm := NewDefaultPeriodManager([]Period{PERIOD_M, PERIOD_M5})
-	periods := pm.GetPeriodDependencies(PeriodFromStringUnsafe("D1"))
+	pm := NewDefaultPeriodManager(BASIC_PERIODS)
+	pm.AddPeriod(PeriodFromStringUnsafe("D3"))
+	periods := pm.GetPeriodDependencies(PeriodFromStringUnsafe("N1"))
 	outputPeriods(periods)
 }
 
