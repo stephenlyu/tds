@@ -71,13 +71,7 @@ func (this *defaultPeriodManager) AddPeriod(period Period) {
 		return
 	}
 
-	this.lock.RLock()
-	dependencies, ok := this.periodDependencies[period.ShortName()]
-	this.lock.RUnlock()
-	if !ok {
-		dependencies = this.GetPeriodDependencies(period)
-	}
-
+	dependencies := this.GetPeriodDependencies(period)
 	dependencies = append(dependencies, period)
 	this.mergeOrderedPeriods(dependencies)
 
@@ -136,11 +130,18 @@ func (this *defaultPeriodManager) getPeriodDependenciesInternal(period Period) [
 
 func (this *defaultPeriodManager) GetPeriodDependencies(period Period) []Period {
 	this.lock.RLock()
-	periods := this.getPeriodDependenciesInternal(period)
+	periods, ok := this.periodDependencies[period.ShortName()]
+	this.lock.RUnlock()
+	if ok {
+		return append([]Period{}, periods...)
+	}
+
+	this.lock.RLock()
+	periods = this.getPeriodDependenciesInternal(period)
 	this.lock.RUnlock()
 
 	this.lock.Lock()
-	this.periodDependencies[period.ShortName()] = periods
+	this.periodDependencies[period.ShortName()] = append([]Period{}, periods...)
 	this.lock.Unlock()
 
 	return periods
