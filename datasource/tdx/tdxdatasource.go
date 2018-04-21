@@ -622,7 +622,7 @@ func (this *tdxDataSource) AppendData(security *Security, period Period, data []
 	defer file.Close()
 
 	marshaller := NewMarshaller(period)
-	err, fromIndex := this.truncateIf(file, marshaller, period, &data[0])
+	err, fromIndex := this.truncateIf(file, marshaller, period, data[0].Date)
 
 	writer := NewRecordWriter(file, TDX_RECORD_SIZE, marshaller)
 	return writer.Write(fromIndex, data)
@@ -662,7 +662,7 @@ func (this tdxDataSource) checkRawData(data []byte) bool {
 	return true
 }
 
-func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller, period Period, r *Record) (err error, fromIndex int) {
+func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller, period Period, date uint64) (err error, fromIndex int) {
 	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
 	var count int
 	err, count = reader.Count()
@@ -678,7 +678,7 @@ func (this *tdxDataSource) truncateIf(file *os.File, marshaller RecordMarshaller
 		}
 	}
 
-	err, fromIndex, _ = this.binarySearchRecord(reader, period, r.Date, count)
+	err, fromIndex, _ = this.binarySearchRecord(reader, period, date, count)
 	if err != nil {
 		return
 	}
@@ -716,8 +716,28 @@ func (this *tdxDataSource) AppendRawData(security *Security, period Period, data
 	var r Record
 	marshaller.FromBytes(data[:TDX_RECORD_SIZE], &r)
 
-	err, fromIndex := this.truncateIf(file, marshaller, period, &r)
+	err, fromIndex := this.truncateIf(file, marshaller, period, r.Date)
 
 	writer := NewRecordWriter(file, TDX_RECORD_SIZE, marshaller)
 	return writer.WriteRaw(fromIndex, data)
+}
+
+func (this *tdxDataSource) TruncateTo(security *Security, period Period, date uint64) error {
+	filePath := this.getStrictDataFile(security, period)
+	if filePath == "" {
+		return errors.New("period not supported")
+	}
+	os.MkdirAll(filepath.Dir(filePath), 0777)
+
+	file, err := os.OpenFile(filePath, os.O_RDWR|os.O_CREATE, 0666)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
+
+	marshaller := NewMarshaller(period)
+
+	err, _ = this.truncateIf(file, marshaller, period, date)
+
+	return err
 }

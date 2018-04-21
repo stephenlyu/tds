@@ -40,4 +40,7 @@ type DataSource interface {
 	AppendData(security *Security, period Period, data []Record) error // Append data
 	AppendRawData(security *Security, period Period, data []byte) error // Append raw data
 	SaveData(security *Security, period Period, data []Record) error // Replace data with new data
+
+	// Remove data which date is greater or equal to date
+	TruncateTo(security *Security, period Period, date uint64) error
 }
