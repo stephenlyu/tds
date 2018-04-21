@@ -30,16 +30,50 @@ var periodNameMap = map[string]string {
 	"minline": "MINUTE1",
 }
 
+func dir2Period(dirName string) string {
+	ret, ok := periodNameMap[dirName]
+	if ok {
+		return ret
+	}
+
+	dirName = strings.ToUpper(dirName)
+	err, _ := PeriodFromString(dirName)
+	if err != nil {
+		return ""
+	}
+
+	return dirName
+}
+
 var periodNameReMap = map[string]string {
 	"MINUTE5": "fzline",
 	"DAY1": "lday",
 	"MINUTE1": "minline",
 }
 
+func getPeriodDir(ps string) string {
+	ret, ok := periodNameReMap[ps]
+	if ok {
+		return ret
+	}
+
+	return strings.ToLower(ps)
+}
+
 var fileNameSuffixMap = map[string]string {
 	"MINUTE1": ".lc1",
 	"MINUTE5": ".lc5",
 	"DAY1": ".day",
+}
+
+func getFileNameSuffix(p Period) string {
+	ps := p.Name()
+	ret, ok := fileNameSuffixMap[ps]
+	if ok {
+		return ret
+	}
+
+	return "." + strings.ToLower(p.ShortName())
 }
 
 var exchangeBlockMap = map[string]string {
@@ -298,7 +332,7 @@ func (this *tdxDataSource) GetData(security *Security, period Period) (error, []
 func (this *tdxDataSource) getStrictDataFile(security *Security, period Period) string {
 	code := SecurityToString(security)
 	root := filepath.Join(this.DataDir, strings.ToLower(security.Exchange))
-	return filepath.Join(root, periodNameReMap[period.Name()], fmt.Sprintf("%s%s", code, fileNameSuffixMap[period.Name()]))
+	return filepath.Join(root, getPeriodDir(period.Name()), fmt.Sprintf("%s%s", code, getFileNameSuffix(period)))
 }
 
 func (this *tdxDataSource) getDataFile(security *Security, period Period) (Period, string) {
@@ -317,8 +351,8 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 		if !f.IsDir() {
 			continue
 		}
-		name, ok := periodNameMap[f.Name()]
-		if !ok {
+		name := dir2Period(f.Name())
+		if name == "" {
 			continue
 		}
 
@@ -331,7 +365,7 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 			continue
 		}
 
-		filePath := filepath.Join(root, f.Name(), fmt.Sprintf("%s%s", code, fileNameSuffixMap[p.Name()]))
+		filePath := filepath.Join(root, f.Name(), fmt.Sprintf("%s%s", code, getFileNameSuffix(p)))
 		_, err = os.Stat(filePath)
 		if err != nil {
 			log.Debugf("tdxDataSource.getDataFile stat file: %s error: %v", filePath, err)
@@ -342,7 +376,7 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 	}
 
 	if len(periods) == 0 {
-		log.Errorf("tdxDataSource.getDataFile no period directory found")
+		log.Errorf("tdxDataSource.getDataFile no period directory found, period: %s", period.ShortName())
 		return nil, ""
 	}
 
@@ -350,7 +384,7 @@ func (this *tdxDataSource) getDataFile(security *Security, period Period) (Perio
 		return periods[i].Gt(periods[j])
 	})
 	dataPeriod := periods[0]
-	return dataPeriod, filepath.Join(root, periodNameReMap[dataPeriod.Name()], fmt.Sprintf("%s%s", code, fileNameSuffixMap[dataPeriod.Name()]))
+	return dataPeriod, filepath.Join(root, getPeriodDir(dataPeriod.Name()), fmt.Sprintf("%s%s", code, getFileNameSuffix(dataPeriod)))
 }
 
 func (this *tdxDataSource) binarySearchRecord(reader RecordReader, period Period, date uint64, count int) (error, int, bool) {

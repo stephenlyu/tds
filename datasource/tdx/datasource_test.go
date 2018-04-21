@@ -10,6 +10,7 @@ import (
 	"github.com/stephenlyu/tds/date"
 	"fmt"
 	"os"
+	"github.com/stephenlyu/tds/datasource"
 )
 
 func TestTdxDataSource(t *testing.T) {
@@ -178,6 +179,32 @@ func TestTdxDataSource_AppendData(t *testing.T) {
 	_, records1 := ds1.GetData(security, period)
 	util.Assert(eqRecords(records, records1), "")
 
+}
+
+func TestCustomPeriodSave(t *testing.T) {
+	ds := tdxdatasource.NewDataSource("data", true)
+	security, _ := entity.ParseSecurity("000001.SZ")
+	err, records := ds.GetData(security, period.PERIOD_M5)
+	util.Assert(err == nil, "")
+	fmt.Printf("%s\n", records[len(records) - 1].String())
+
+	converter := datasource.NewPeriodConverter(period.PERIOD_M5, period.PERIOD_M15)
+	destData := converter.Convert(records)
+	ds.SaveData(security, period.PERIOD_M15, destData)
+
+	err, data := ds.GetData(security, period.PERIOD_M15)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == len(destData), "")
+	for i := range destData {
+		r1 := &destData[i]
+		r2 := &data[i]
+
+		util.Assert(r1.GetDate() == r2.GetDate(), "")
+		util.Assert(util.Round(float64(r1.GetOpen()), 2) == util.Round(float64(r2.GetOpen()), 2), fmt.Sprintf("%s %d %d", r1.GetDate(), r1.Open, r2.Open))
+		util.Assert(util.Round(float64(r1.GetClose()), 2) == util.Round(float64(r2.GetClose()), 2), fmt.Sprintf("%s %d %d", r1.GetDate(), r1.Close, r2.Close))
+		util.Assert(util.Round(float64(r1.GetLow()), 2) == util.Round(float64(r2.GetLow()), 2), fmt.Sprintf("%s %d %d", r1.GetDate(), r1.Low, r2.Low))
+		util.Assert(util.Round(float64(r1.GetHigh()), 2) == util.Round(float64(r2.GetHigh()), 2), fmt.Sprintf("%s %d %d", r1.GetDate(), r1.High, r2.High))
+	}
 }
 
 func TestTdxDataSource_AppendRawData(t *testing.T) {
