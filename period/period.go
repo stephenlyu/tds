@@ -51,6 +51,8 @@ type Period interface {
 type period struct {
 	unit PeriodUnit
 	unitCount int
+
+	shortName, name string
 }
 
 // periodStr format: M1 or MINUTE1
@@ -69,34 +71,41 @@ func PeriodFromString(periodStr string) (error, Period) {
 		return errors.New("bad unit count"), nil
 	}
 
+	var p *period
+
 	switch unitStr {
 	case "M":
 		fallthrough
 	case "MINUTE":
-		return nil, &period{PERIOD_UNIT_MINUTE, nUnit}
+		p = &period{unit: PERIOD_UNIT_MINUTE, unitCount: nUnit}
 	case "D":
 		fallthrough
 	case "DAY":
-		return nil, &period{PERIOD_UNIT_DAY, nUnit}
+		p = &period{unit: PERIOD_UNIT_DAY, unitCount: nUnit}
 	case "W":
 		fallthrough
 	case "WEEK":
-		return nil, &period{PERIOD_UNIT_WEEK, nUnit}
+		p = &period{unit: PERIOD_UNIT_WEEK, unitCount: nUnit}
 	case "N":
 		fallthrough
 	case "MONTH":
-		return nil, &period{PERIOD_UNIT_MONTH, nUnit}
+		p = &period{unit: PERIOD_UNIT_MONTH, unitCount: nUnit}
 	case "Q":
 		fallthrough
 	case "QUARTER":
-		return nil, &period{PERIOD_UNIT_QUARTER, nUnit}
+		p = &period{unit: PERIOD_UNIT_QUARTER, unitCount: nUnit}
 	case "Y":
 		fallthrough
 	case "YEAR":
-		return nil, &period{PERIOD_UNIT_YEAR, nUnit}
+		p = &period{unit: PERIOD_UNIT_YEAR, unitCount: nUnit}
+	default:
+		return errors.New("bad period string"), nil
 	}
 
-	return errors.New("bad period string"), nil
+	p.shortName = p.calcShortName()
+	p.name = p.calcName()
+
+	return nil, p
 }
 
 func PeriodFromStringUnsafe(periodStr string) Period {
@@ -104,7 +113,7 @@ func PeriodFromStringUnsafe(periodStr string) Period {
 	return ret
 }
 
-func (this *period) Name() string {
+func (this *period) calcName() string {
 	switch (this.unit) {
 	case PERIOD_UNIT_MINUTE:
 		return fmt.Sprintf("MINUTE%d", this.unitCount)
@@ -122,7 +131,7 @@ func (this *period) Name() string {
 	return ""
 }
 
-func (this *period) ShortName() string {
+func (this *period) calcShortName() string {
 	switch (this.unit) {
 	case PERIOD_UNIT_MINUTE:
 		return fmt.Sprintf("M%d", this.unitCount)
@@ -138,6 +147,14 @@ func (this *period) ShortName() string {
 		return fmt.Sprintf("Y%d", this.unitCount)
 	}
 	return ""
+}
+
+func (this *period) Name() string {
+	return this.name
+}
+
+func (this *period) ShortName() string {
+	return this.shortName
 }
 
 func (this *period) DisplayName() string {
