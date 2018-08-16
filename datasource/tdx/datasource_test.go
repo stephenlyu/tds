@@ -158,6 +158,8 @@ var eqRecords = func(rs1, rs2 []entity.Record) bool {
 
 	for i := range rs1 {
 		if !rs1[i].Eq(&rs2[i]) {
+			fmt.Printf("%+v\n", &rs1[i])
+			fmt.Printf("%+v\n", &rs2[i])
 			return false
 		}
 	}

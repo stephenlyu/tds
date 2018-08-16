@@ -4,6 +4,7 @@ import (
 	"github.com/stephenlyu/tds/datasource"
 	"github.com/stephenlyu/tds/entity"
 	"github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/util"
 )
 
 const MINUTE = 60 * 1000
@@ -30,12 +31,12 @@ func (this *tdxMarshaller) ToBytes(record *entity.Record) ([]byte, error) {
 
 	tRecord := TDXRecord{
 		Date: TimestampToDate(this.period, date),
-		Open: record.Open,
-		Close: record.Close,
-		High: record.High,
-		Low: record.Low,
-		Amount: record.Amount,
-		Volume: record.Volume,
+		Open: int32(util.Round(record.Open * 1000, 0)),
+		Close: int32(util.Round(record.Close * 1000, 0)),
+		High: int32(util.Round(record.High * 1000, 0)),
+		Low: int32(util.Round(record.Low * 1000, 0)),
+		Amount: float32(record.Amount),
+		Volume: float32(record.Volume),
 	}
 	return tRecord.Bytes(this.period), nil
 }
@@ -48,12 +49,12 @@ func (this *tdxMarshaller) FromBytes(bytes []byte, record *entity.Record) error 
 	}
 
 	record.Date = DateToTimestamp(this.period, tRecord.Date)
-	record.Open = tRecord.Open
-	record.Close = tRecord.Close
-	record.High = tRecord.High
-	record.Low = tRecord.Low
-	record.Amount = tRecord.Amount
-	record.Volume = tRecord.Volume
+	record.Open = float64(tRecord.Open) / 1000
+	record.Close = float64(tRecord.Close) / 1000
+	record.High = float64(tRecord.High) / 1000
+	record.Low = float64(tRecord.Low) / 1000
+	record.Amount = float64(tRecord.Amount)
+	record.Volume = float64(tRecord.Volume)
 
 	if this.period.Unit() == period.PERIOD_UNIT_MINUTE {
 		if record.Date % DAY == MINUTE_1300 {

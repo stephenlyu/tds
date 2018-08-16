@@ -24,7 +24,7 @@ func Test_MongoDataSource_SaveData(t *testing.T) {
 	util.Assert(err == nil, "")
 
 	mongDs := mongodatasource.NewMongoDataSource("localhost", "data")
-	err = mongDs.AppendData(security, period1, data)
+	err = mongDs.AppendData(security, period1, data[:1000])
 	util.Assert(err == nil, "")
 }
 

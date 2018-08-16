@@ -7,6 +7,7 @@ import (
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
 	. "github.com/stephenlyu/tds/date"
+	"github.com/stephenlyu/tds/util"
 )
 
 // TODO: 数据转换时，针对跨市场的情况，需要重新考虑时间的计算问题
@@ -330,10 +331,9 @@ func NewForwardAdjustConverter(period Period, items []InfoExItem) Converter {
 }
 
 func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
-	var forwardAdjustPrice = func (price int32) int32 {
-		fPrice := float32(price) / 1000.0
-		ret := int32(((fPrice - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares) * 10000.0)
-		ret = (ret + 5) / 10
+	var forwardAdjustPrice = func (price float64) float64 {
+		ret := ((price - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares)
+		ret = util.Round(ret, 3)
 		return ret
 	}
 

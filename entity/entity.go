@@ -1,9 +1,6 @@
 package entity
 
 import (
-	"encoding/binary"
-	"math"
-	"errors"
 	"unsafe"
 	"github.com/stephenlyu/tds/date"
 	"fmt"
@@ -13,20 +10,20 @@ import (
 // After price adjusted, it maybe a negative value
 type Record struct {
 	Date uint64			`bson:"_id"`	// UTC毫秒数
-	Open int32							// 开盘价，精确到分
-	Close int32
-	High int32
-	Low int32
-	Volume float32
-	Amount float32
+	Open float64						// 开盘价，精确到分
+	Close float64
+	High float64
+	Low float64
+	Volume float64
+	Amount float64
 }
 
 type InfoExItem struct {
 	Date uint32					`json:"date"`
-	Bonus float32				`json:"bonus"`
-	DeliveredShares float32		`json:"delivered_shares"`
-	RationedSharePrice float32	`json:"rationed_share_price"`
-	RationedShares float32		`json:"rationed_shares"`
+	Bonus float64				`json:"bonus"`
+	DeliveredShares float64		`json:"delivered_shares"`
+	RationedSharePrice float64	`json:"rationed_share_price"`
+	RationedShares float64		`json:"rationed_shares"`
 }
 
 const recordSize = int(unsafe.Sizeof(Record{}))
@@ -44,62 +41,30 @@ func (this *Record) GetDate() string {
 	return date.Timestamp2SecondString(this.Date)
 }
 
-func (this *Record) GetOpen() float32 {
-	return float32(this.Open) / 1000.0
+func (this *Record) GetOpen() float64 {
+	return this.Open
 }
 
-func (this *Record) GetClose() float32 {
-	return float32(this.Close) / 1000.0
+func (this *Record) GetClose() float64 {
+	return this.Close
 }
 
-func (this *Record) GetLow() float32 {
-	return float32(this.Low) / 1000.0
+func (this *Record) GetLow() float64 {
+	return this.Low
 }
 
-func (this *Record) GetHigh() float32 {
-	return float32(this.High) / 1000.0
+func (this *Record) GetHigh() float64 {
+	return this.High
 }
 
-func (this *Record) GetAmount() float32 {
+func (this *Record) GetAmount() float64 {
 	return this.Amount
 }
 
-func (this *Record) GetVolume() float32 {
+func (this *Record) GetVolume() float64 {
 	return this.Volume
 }
 
 func (this *Record) String() string {
 	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
-}
-
-func RecordFromBytes(data []byte, r *Record) error {
-	if len(data) != recordSize {
-		return errors.New("less record bytes")
-	}
-
-	if r == nil {
-		return errors.New("bad record argument")
-	}
-
-	r.Date = binary.LittleEndian.Uint64(data[0:8])
-	r.Open = int32(binary.LittleEndian.Uint32(data[8:12]))
-	r.Close = int32(binary.LittleEndian.Uint32(data[12:16]))
-	r.High = int32(binary.LittleEndian.Uint32(data[16:20]))
-	r.Low = int32(binary.LittleEndian.Uint32(data[20:24]))
-	r.Volume = math.Float32frombits(binary.LittleEndian.Uint32(data[24:28]))
-	r.Amount = math.Float32frombits(binary.LittleEndian.Uint32(data[28:32]))
-	return nil
-}
-
-func (this *Record) Bytes() []byte {
-	ret := make([]byte, recordSize)
-
-	binary.LittleEndian.PutUint64(ret[0:8], this.Date)
-	binary.LittleEndian.PutUint32(ret[8:12], uint32(this.Open))
-	binary.LittleEndian.PutUint32(ret[12:16], uint32(this.Close))
-	binary.LittleEndian.PutUint32(ret[16:20], uint32(this.High))
-	binary.LittleEndian.PutUint32(ret[20:24], uint32(this.Low))
-	binary.LittleEndian.PutUint32(ret[24:28], math.Float32bits(this.Volume))
-	binary.LittleEndian.PutUint32(ret[28:32], math.Float32bits(this.Amount))
-	return ret
 }
