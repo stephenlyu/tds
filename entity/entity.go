@@ -12,8 +12,8 @@ import (
 
 // After price adjusted, it maybe a negative value
 type Record struct {
-	Date uint64			// UTC毫秒数
-	Open int32			// 开盘价，精确到分
+	Date uint64			`bson:"_id"`	// UTC毫秒数
+	Open int32							// 开盘价，精确到分
 	Close int32
 	High int32
 	Low int32
