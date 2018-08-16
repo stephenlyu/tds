@@ -62,6 +62,10 @@ func TestTdxDataSource(t *testing.T) {
 	util.Assert(err == nil, "")
 	util.Assert(len(data) == 1104, "")
 
+	err, data = ds.GetDataEx(security, period2, startDate, 100)
+	util.Assert(err == nil, "")
+	util.Assert(len(data) == 100, "")
+
 	// 日线数据
 	err, data = ds.GetData(security, period3)
 	util.Assert(err == nil, "")

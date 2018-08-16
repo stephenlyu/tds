@@ -7,7 +7,6 @@ import (
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
 	. "github.com/stephenlyu/tds/date"
-	"github.com/z-ray/log"
 )
 
 // TODO: 数据转换时，针对跨市场的情况，需要重新考虑时间的计算问题
@@ -340,7 +339,6 @@ func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
 
 	for i := 0; i < len(data); i++ {
 		r := &data[i]
-		log.Debug(r.String())
 		if GetDateDay(r.Date) >= int(item.Date) {
 			break
 		}
@@ -379,7 +377,6 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 		if int(item.Date) > lastDate {
 			break
 		}
-		log.Debug(firstDate, lastDate, item.Date)
 
 		this.doConvert(ret, item)
 	}

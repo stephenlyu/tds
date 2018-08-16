@@ -413,6 +413,51 @@ func (this *tdxDataSource) binarySearchRecord(reader RecordReader, period Period
 	return nil, low, false
 }
 
+func (this *tdxDataSource) GetDataEx(security *Security, period Period, startDate uint64, count int) (error, []Record) {
+	dataPeriod, dataFile := this.getDataFile(security, period)
+	if dataFile == "" {
+		return errors.New("data file not found"), nil
+	}
+
+	file, err := os.Open(dataFile)
+	if err != nil {
+		return err, nil
+	}
+	defer file.Close()
+
+	marshaller := NewMarshaller(dataPeriod)
+
+	reader := NewRecordReader(file, TDX_RECORD_SIZE, marshaller)
+	err, recordCount := reader.Count()
+	if err != nil {
+		return err, nil
+	}
+
+	var startIndex = 0
+	if startDate != 0 {
+		err, startIndex, _ = this.binarySearchRecord(reader, dataPeriod, startDate, recordCount)
+		if err != nil {
+			return err, nil
+		}
+	}
+	var endIndex = startIndex + count
+	if endIndex > recordCount {
+		endIndex = recordCount
+	}
+
+	err, records := reader.Read(startIndex, endIndex)
+	if err != nil {
+		return err, nil
+	}
+
+	if period.Eq(dataPeriod) {
+		return nil, records
+	}
+
+	converter := NewPeriodConverter(dataPeriod, period)
+	return nil, converter.Convert(records)
+}
+
 func (this *tdxDataSource) GetRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
 	if startDate != 0 && endDate != 0 && startDate > endDate {
 		return nil, []Record{}
