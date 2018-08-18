@@ -101,3 +101,94 @@ func RecordFromProtoBytes(bytes []byte) (*Record, error) {
 		Amount: pr.GetAmount(),
 	}, nil
 }
+
+type Tick struct {
+	Code string
+	Timestamp uint64
+	HighLimited float64
+	LowLimited float64
+	Price float64
+	Position float64
+	Settle float64
+	Open float64
+	Close float64
+	High float64
+	Low float64
+	Volume float64
+	TotalVolume float64
+	Amount float64
+	TotalAmount float64
+	PreSettle float64
+	PrePosition float64
+	PreClose float64
+	AskPrices []float64
+	AskVolumes []float64
+	BidPrices []float64
+	BidVolumes []float64
+}
+
+func (this *Tick) GetDate() string {
+	return date.Timestamp2SecondString(this.Timestamp)
+}
+
+func (this *Tick) ToProtoBytes() ([]byte, error) {
+	pr := ProtoTick{
+		Code: this.Code,
+		Timestamp: int64(this.Timestamp),
+		HighLimited: this.HighLimited,
+		LowLimited: this.LowLimited,
+		Price: this.Price,
+		Position: this.Position,
+		Settle: this.Settle,
+		Open: this.Open,
+		Close: this.Close,
+		High: this.High,
+		Low: this.Low,
+		Volume: this.Volume,
+		TotalVolume: this.TotalVolume,
+		Amount: this.Amount,
+		TotalAmount: this.TotalAmount,
+		PreSettle: this.PreSettle,
+		PrePosition: this.PrePosition,
+		PreClose: this.PreClose,
+		AskPrices: this.AskPrices,		// 不拷贝
+		AskVolumes: this.AskVolumes,
+		BidPrices: this.BidPrices,
+		BidVolumes: this.BidVolumes,
+	}
+
+	return proto.Marshal(&pr)
+}
+
+func TickFromProtoBytes(bytes []byte) (*Tick, error) {
+	var pr ProtoTick
+	err := proto.Unmarshal(bytes, &pr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Tick{
+		Code: pr.Code,
+		Timestamp: uint64(pr.Timestamp),
+		HighLimited: pr.HighLimited,
+		LowLimited: pr.LowLimited,
+		Price: pr.Price,
+		Position: pr.Position,
+		Settle: pr.Settle,
+		Open: pr.Open,
+		Close: pr.Close,
+		High: pr.High,
+		Low: pr.Low,
+		Volume: pr.Volume,
+		TotalVolume: pr.TotalVolume,
+		Amount: pr.Amount,
+		TotalAmount: pr.TotalAmount,
+		PreSettle: pr.PreSettle,
+		PrePosition: pr.PrePosition,
+		PreClose: pr.PreClose,
+		AskPrices: pr.AskPrices,		// 不拷贝
+		AskVolumes: pr.AskVolumes,
+		BidPrices: pr.BidPrices,
+		BidVolumes: pr.BidVolumes,
+	}, nil
+}

@@ -4,7 +4,7 @@ syntax = "proto3";
 package entity;
 
 message ProtoRecord {
-    int64 date = 1;
+    sint64 date = 1;
     double open = 2;
     double close = 3;
     double high = 4;
@@ -13,3 +13,27 @@ message ProtoRecord {
     double amount = 7;
 }
 
+message ProtoTick {
+    string code = 1;
+    sint64 timestamp = 2;
+    double highLimited = 3;
+    double lowLimited = 4;
+    double price = 5;
+    double position = 6;
+    double settle = 7;
+    double open = 8;
+    double close = 9;
+    double high = 10;
+    double low = 11;
+    double volume = 12;
+    double totalVolume = 13;
+    double amount = 14;
+    double totalAmount = 15;
+    double preSettle = 16;
+    double prePosition = 17;
+    double preClose = 18;
+    repeated double askPrices = 19;
+    repeated double askVolumes = 20;
+    repeated double bidPrices = 21;
+    repeated double bidVolumes = 22;
+}
