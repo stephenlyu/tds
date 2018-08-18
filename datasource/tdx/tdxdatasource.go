@@ -786,3 +786,8 @@ func (this *tdxDataSource) TruncateTo(security *Security, period Period, date ui
 
 	return err
 }
+
+func (this *tdxDataSource) RemoveData(security *Security, period Period, startDate, endDate uint64) error {
+	panic("Unimplemented")
+	return nil
+}

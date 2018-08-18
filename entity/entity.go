@@ -102,7 +102,7 @@ func RecordFromProtoBytes(bytes []byte) (*Record, error) {
 	}, nil
 }
 
-type Tick struct {
+type TickItem struct {
 	Code string
 	Timestamp uint64
 	HighLimited float64
@@ -127,11 +127,11 @@ type Tick struct {
 	BidVolumes []float64
 }
 
-func (this *Tick) GetDate() string {
+func (this *TickItem) GetDate() string {
 	return date.Timestamp2SecondString(this.Timestamp)
 }
 
-func (this *Tick) ToProtoBytes() ([]byte, error) {
+func (this *TickItem) ToProtoBytes() ([]byte, error) {
 	pr := ProtoTick{
 		Code: this.Code,
 		Timestamp: int64(this.Timestamp),
@@ -160,14 +160,14 @@ func (this *Tick) ToProtoBytes() ([]byte, error) {
 	return proto.Marshal(&pr)
 }
 
-func TickFromProtoBytes(bytes []byte) (*Tick, error) {
+func TickItemFromProtoBytes(bytes []byte) (*TickItem, error) {
 	var pr ProtoTick
 	err := proto.Unmarshal(bytes, &pr)
 	if err != nil {
 		return nil, err
 	}
 
-	return &Tick{
+	return &TickItem{
 		Code: pr.Code,
 		Timestamp: uint64(pr.Timestamp),
 		HighLimited: pr.HighLimited,

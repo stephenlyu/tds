@@ -8,6 +8,7 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/stephenlyu/tds/datasource"
 	"strings"
+	"math"
 )
 
 type _MongoDataSource struct {
@@ -58,6 +59,10 @@ func (this *_MongoDataSource) GetRangeData(security *Security, period Period, st
 }
 
 func (this *_MongoDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
+	if endDate == 0 {
+		endDate = math.MaxUint64
+	}
+
 	colName := this.collectionName(security, period)
 	l := []Record{}
 	err := this.session.DB(this.dbName).C(colName).Find(bson.M{"_id": bson.M{"$lte": endDate}}).Sort("-_id").Limit(count).All(&l)
@@ -90,4 +95,24 @@ func (this *_MongoDataSource) SaveData(security *Security, period Period, data [
 		}
 	}
 	return nil
+}
+
+func (this *_MongoDataSource) RemoveData(security *Security, period Period, startDate, endDate uint64) error {
+	colName := this.collectionName(security, period)
+	cond := bson.M{}
+	if startDate != 0 {
+		cond["$gte"] = startDate
+	}
+	if endDate != 0 {
+		cond["$lte"] = endDate
+	}
+	query := bson.M{}
+
+	if len(cond) > 0 {
+		query["_id"] = cond
+	}
+
+	fmt.Printf("%+v\n", query)
+	_, err := this.session.DB(this.dbName).C(colName).RemoveAll(query)
+	return err
 }
