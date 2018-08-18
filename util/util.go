@@ -9,6 +9,7 @@ import (
 	"math"
 	"runtime"
 	"bytes"
+	"compress/zlib"
 )
 
 func Assert(cond bool, msg string) {
@@ -19,6 +20,10 @@ func Assert(cond bool, msg string) {
 
 func Tick() uint64 {
 	return uint64(time.Now().UnixNano() / int64(time.Millisecond))
+}
+
+func NanoTick() uint64 {
+	return uint64(time.Now().UnixNano())
 }
 
 func UnzipFile(fileName string, outputDir string) error {
@@ -105,4 +110,25 @@ func PanicTrace(kb int) []byte {
 	}
 	stack = bytes.TrimRight(stack, "\n")
 	return stack
+}
+
+//进行zlib压缩
+func ZlibCompress(src []byte) []byte {
+	var in bytes.Buffer
+	w := zlib.NewWriter(&in)
+	w.Write(src)
+	w.Close()
+	return in.Bytes()
+}
+
+//进行zlib解压缩
+func ZlibUnCompress(compressSrc []byte) ([]byte, error) {
+	b := bytes.NewReader(compressSrc)
+	var out bytes.Buffer
+	r, err := zlib.NewReader(b)
+	if err != nil {
+		return nil, err
+	}
+	io.Copy(&out, r)
+	return out.Bytes(), nil
 }

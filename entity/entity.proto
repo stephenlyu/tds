@@ -1,0 +1,15 @@
+
+syntax = "proto3";
+
+package entity;
+
+message ProtoRecord {
+    int64 date = 1;
+    double open = 2;
+    double close = 3;
+    double high = 4;
+    double low = 5;
+    double volume = 6;
+    double amount = 7;
+}
+

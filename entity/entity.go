@@ -4,6 +4,7 @@ import (
 	"unsafe"
 	"github.com/stephenlyu/tds/date"
 	"fmt"
+	"github.com/golang/protobuf/proto"
 )
 
 
@@ -67,4 +68,36 @@ func (this *Record) GetVolume() float64 {
 
 func (this *Record) String() string {
 	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
+}
+
+func (this *Record) ToProtoBytes() ([]byte, error) {
+	pr := ProtoRecord{
+		Date: int64(this.Date),
+		Open: this.Open,
+		Close: this.Close,
+		High: this.High,
+		Low: this.Low,
+		Volume: this.Volume,
+		Amount: this.Amount,
+	}
+
+	return proto.Marshal(&pr)
+}
+
+func RecordFromProtoBytes(bytes []byte) (*Record, error) {
+	var pr ProtoRecord
+	err := proto.Unmarshal(bytes, &pr)
+	if err != nil {
+		return nil, err
+	}
+
+	return &Record{
+		Date: uint64(pr.GetDate()),
+		Open: pr.GetOpen(),
+		Close: pr.GetClose(),
+		High: pr.GetHigh(),
+		Low: pr.GetLow(),
+		Volume: pr.GetVolume(),
+		Amount: pr.GetAmount(),
+	}, nil
 }
