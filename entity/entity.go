@@ -67,7 +67,7 @@ func (this *Record) GetVolume() float64 {
 }
 
 func (this *Record) String() string {
-	return fmt.Sprintf(`Record {Date: %s Open: %.02f Close: %.02f Low: %.02f High: %.02f Amount: %.02f Volume: %.02f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
+	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
 }
 
 func (this *Record) ToProtoBytes() ([]byte, error) {
