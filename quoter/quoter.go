@@ -12,3 +12,7 @@ type Quoter interface {
 
 	Destroy()
 }
+
+type QuoteFactory interface {
+	CreateQuoter(config interface{}) Quoter
+}
