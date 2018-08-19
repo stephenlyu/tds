@@ -5,6 +5,7 @@ import (
 	"github.com/stephenlyu/tds/date"
 	"fmt"
 	"github.com/golang/protobuf/proto"
+	"encoding/json"
 )
 
 
@@ -17,6 +18,11 @@ type Record struct {
 	Low float64
 	Volume float64
 	Amount float64
+}
+
+type RecordEx struct {
+	Record
+	Code string
 }
 
 type InfoExItem struct {
@@ -68,6 +74,14 @@ func (this *Record) GetVolume() float64 {
 
 func (this *Record) String() string {
 	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
+}
+
+func (this *Record) ToJsonBytes() ([]byte, error) {
+	return json.Marshal(this)
+}
+
+func (this *RecordEx) ToJsonBytes() ([]byte, error) {
+	return json.Marshal(this)
 }
 
 func (this *Record) ToProtoBytes() ([]byte, error) {
@@ -129,6 +143,10 @@ type TickItem struct {
 
 func (this *TickItem) GetDate() string {
 	return date.Timestamp2SecondString(this.Timestamp)
+}
+
+func (this *TickItem) ToJsonBytes() ([]byte, error) {
+	return json.Marshal(this)
 }
 
 func (this *TickItem) ToProtoBytes() ([]byte, error) {
