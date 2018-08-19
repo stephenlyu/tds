@@ -86,7 +86,7 @@ func GetSecurityTradeDates(security *entity.Security) []string {
 	util.Assert(err == nil, "")
 
 	ret = nil
-	for v := startTs; v < util.Tick(); v += DAY_MILLIS {
+	for v := startTs; v < util.Tick() + DAY_MILLIS * 30; v += DAY_MILLIS {
 		d := date.Timestamp2DayString(v)
 		if util.InStrings(d, dd.NonTradeDates) {
 			continue

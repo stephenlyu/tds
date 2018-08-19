@@ -6,7 +6,6 @@ import (
 	"github.com/stephenlyu/tds/util"
 	"github.com/stephenlyu/tds/tradedate"
 	"github.com/stephenlyu/tds/date"
-	"fmt"
 )
 
 //
@@ -62,7 +61,6 @@ func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 	}
 
 	index := util.FindUInt64s(this.tickers, r.Date)
-	fmt.Println(r.Date, len(this.tickers), this.startTs, this.endTs)
 	util.Assert(index != -1, "")
 
 	var ret []*entity.Record

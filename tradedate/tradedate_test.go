@@ -29,7 +29,7 @@ func TestToTradeMinute(t *testing.T) {
 
 func TestGetTradeTickers(t *testing.T) {
 	security := entity.ParseSecurityUnsafe("EOSQFUT.OKEX")
-	tickers := GetTradeTickers(security, util.Tick())
+	tickers := GetTradeTickers(security, 1534671000000)
 	for i, ticker := range tickers {
 		fmt.Println(i, date.Timestamp2SecondString(ticker))
 	}
