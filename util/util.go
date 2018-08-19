@@ -18,6 +18,10 @@ func Assert(cond bool, msg string) {
 	}
 }
 
+func UnreachableCode() {
+	panic("Unreachable code")
+}
+
 func Tick() uint64 {
 	return uint64(time.Now().UnixNano() / int64(time.Millisecond))
 }

@@ -4,6 +4,7 @@ import (
 	"regexp"
 	"errors"
 	"strings"
+	"github.com/stephenlyu/tds/util"
 )
 
 type Security struct {
@@ -77,4 +78,8 @@ func (this *Security) GetExchange() string {
 
 func (this *Security) IsSpot() bool {
 	return this.Code == "SPOT"
+}
+
+func (this *Security) IsDigitCurrency() bool {
+	return util.InStrings(this.Exchange, []string{"OKEX", "HUOBI"})
 }

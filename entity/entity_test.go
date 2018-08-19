@@ -9,11 +9,18 @@ import (
 )
 
 func TestSecurity(t *testing.T) {
-	code := "600000.SH"
-	security, err := entity.ParseSecurity(code)
-	util.Assert(err == nil, "err == nil")
-	util.Assert(security != nil, "")
-	util.Assert(security.String() == code, "")
+	codes := []string{
+		"600000.SH", "EOSQFUT.OKEX",
+		"BTCUSDTSPOT.HUOBI", "RB1901.SHFE",
+	}
+
+	for _, code := range codes {
+		security, err := entity.ParseSecurity(code)
+		util.Assert(err == nil, fmt.Sprintf("%+v", err))
+		util.Assert(security != nil, "")
+		util.Assert(security.String() == code, code)
+		fmt.Printf("cat: %s code: %s exchange: %s\n", security.GetCategory(), security.GetCode(), security.GetExchange())
+	}
 }
 
 func TestRecord_ToProtoBytes(t *testing.T) {
