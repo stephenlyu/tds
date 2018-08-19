@@ -144,6 +144,11 @@ func (this *_RedisDataSource) SaveData(security *Security, period Period, data [
 		if err != nil {
 			return err
 		}
+		err = this.redisPool.SortedSetRemoveByScore(key, r.Date, r.Date)
+		if err != nil {
+			return err
+		}
+
 		err = this.redisPool.SortedSetAdd(key, bytes, r.Date)
 		if err != nil {
 			return err
