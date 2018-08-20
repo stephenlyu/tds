@@ -5,7 +5,6 @@ import (
 	"github.com/stephenlyu/tds/datasource"
 	"github.com/stephenlyu/tds/storage"
 	"fmt"
-	"math"
 )
 
 type _RedisTickDataSource struct {
@@ -24,7 +23,7 @@ func (this *_RedisTickDataSource) key(security *Security) string {
 func (this *_RedisTickDataSource) Get(security *Security, startTs, endTs uint64) (error, []TickItem) {
 	key := this.key(security)
 
-	array, err := this.redisPool.SortedSetRangeByScore(key, 0, math.MaxUint64, 0, 0)
+	array, err := this.redisPool.SortedSetRangeByScore(key, startTs, endTs, 0, 0)
 	if err != nil {
 		return err, nil
 	}
