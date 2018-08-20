@@ -50,8 +50,22 @@ func (this *_MongoDataSource) GetDataEx(security *Security, period Period, start
 
 func (this *_MongoDataSource) GetRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
 	colName := this.collectionName(security, period)
+
+	cond := bson.M{}
+	if startDate != 0 {
+		cond["$gte"] = startDate
+	}
+	if endDate != 0 {
+		cond["$lte"] = endDate
+	}
+	query := bson.M{}
+
+	if len(cond) > 0 {
+		query["_id"] = cond
+	}
+
 	l := []Record{}
-	err := this.session.DB(this.dbName).C(colName).Find(bson.M{"_id": bson.M{"$gte": startDate, "lte": endDate}}).Sort("_id").All(&l)
+	err := this.session.DB(this.dbName).C(colName).Find(query).Sort("_id").All(&l)
 	if err != nil {
 		return err, nil
 	}
@@ -64,8 +78,19 @@ func (this *_MongoDataSource) GetDataFromLast(security *Security, period Period,
 	}
 
 	colName := this.collectionName(security, period)
+
+	cond := bson.M{}
+	if endDate != 0 {
+		cond["$lte"] = endDate
+	}
+	query := bson.M{}
+
+	if len(cond) > 0 {
+		query["_id"] = cond
+	}
+
 	l := []Record{}
-	err := this.session.DB(this.dbName).C(colName).Find(bson.M{"_id": bson.M{"$lte": endDate}}).Sort("-_id").Limit(count).All(&l)
+	err := this.session.DB(this.dbName).C(colName).Find(query).Sort("-_id").Limit(count).All(&l)
 	if err != nil {
 		return err, nil
 	}
@@ -112,7 +137,6 @@ func (this *_MongoDataSource) RemoveData(security *Security, period Period, star
 		query["_id"] = cond
 	}
 
-	fmt.Printf("%+v\n", query)
 	_, err := this.session.DB(this.dbName).C(colName).RemoveAll(query)
 	return err
 }
