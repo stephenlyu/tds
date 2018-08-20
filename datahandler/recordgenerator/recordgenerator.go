@@ -25,7 +25,7 @@ func NewRecordGenerator(security *entity.Security) *RecordGenerator {
 
 func (this *RecordGenerator) Feed(tick *entity.TickItem) *entity.Record {
 	util.Assert(tick.Code == this.Security.String(), "")
-	if tick.Price == 0 {
+	if tick.Price == 0 || tick.Volume == 0 {
 		return nil
 	}
 
