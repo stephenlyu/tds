@@ -48,6 +48,14 @@ func (this *Record) GetDate() string {
 	return date.Timestamp2SecondString(this.Date)
 }
 
+func (this *Record) SetDate(s string) {
+	d, err := date.SecondString2Timestamp(s)
+	if err != nil {
+		return
+	}
+	this.Date = d
+}
+
 func (this *Record) GetOpen() float64 {
 	return this.Open
 }

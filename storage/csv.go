@@ -92,12 +92,26 @@ func (this *CsvEngine) Load(csvFile string) (error, []interface{}) {
 	for i := 1; i < len(records); i++ {
 		r := reflect.New(this.recordType)
 		value := r.Elem()
+
 		for j, h := range headers {
 			fieldIndex, ok := headerMap[h]
 			if !ok {
 				continue
 			}
 			f := this.recordType.Field(fieldIndex)
+
+			// 优先调用Set方法
+			methodName := "Set" + f.Name
+			m, ok := r.Type().MethodByName(methodName)
+			if ok {
+				if m.Type.NumIn() == 2 && m.Type.NumOut() == 0 {
+					if m.Type.In(1).Kind() == reflect.String {
+						m.Func.Call([]reflect.Value{r, reflect.ValueOf(records[i][j])})
+						continue
+					}
+				}
+			}
+
 			switch f.Type.Kind() {
 			case reflect.String:
 				value.Field(fieldIndex).SetString(records[i][j])
@@ -158,6 +172,21 @@ func (this *CsvEngine) Save(csvFile string, data []interface{}) error {
 		return strings.TrimSuffix(s, ".")
 	}
 
+	getValue := func (m reflect.Method, arg0 reflect.Value) (value reflect.Value, ok bool) {
+		ok = true
+		defer func() {
+			if err := recover(); err != nil {
+				ok = false
+			}
+		}()
+
+		ret := m.Func.Call([]reflect.Value{arg0})
+		if len(ret) == 1 {
+			value = ret[0]
+		}
+		return
+	}
+
 	for _, r := range data {
 		value := reflect.ValueOf(r)
 		if value.Kind() == reflect.Ptr {
@@ -171,15 +200,35 @@ func (this *CsvEngine) Save(csvFile string, data []interface{}) error {
 
 		for i := 0; i < this.recordType.NumField(); i++ {
 			f := this.recordType.Field(i)
-			switch f.Type.Kind() {
+			var fv reflect.Value
+			methodName := "Get" + f.Name
+			m, ok := this.recordType.MethodByName(methodName)
+			arg0 := value
+			if !ok {
+				m, ok = reflect.PtrTo(this.recordType).MethodByName(methodName)
+				arg0 = value.Addr()
+			}
+			if ok {
+				if m.Type.NumOut() == 1 {
+					fv, ok = getValue(m, arg0)
+					if !ok {
+						fv = value.Field(i)
+					}
+				} else {
+					fv = value.Field(i)
+				}
+			} else {
+				fv = value.Field(i)
+			}
+			switch fv.Type().Kind() {
 			case reflect.String:
-				fields[i] = value.Field(i).String()
+				fields[i] = fv.String()
 			case reflect.Float32, reflect.Float64:
-				fields[i] = trimZero(fmt.Sprintf("%f", value.Field(i).Float()))
+				fields[i] = trimZero(fmt.Sprintf("%f", fv.Float()))
 			case reflect.Int, reflect.Int8, reflect.Int16, reflect.Int32, reflect.Int64:
-				fields[i] = fmt.Sprintf("%d", value.Field(i).Int())
+				fields[i] = fmt.Sprintf("%d", fv.Int())
 			case reflect.Uint, reflect.Uint8, reflect.Uint16, reflect.Uint32, reflect.Uint64:
-				fields[i] = fmt.Sprintf("%d", value.Field(i).Uint())
+				fields[i] = fmt.Sprintf("%d", fv.Uint())
 			default:
 				util.UnreachableCode()
 			}
