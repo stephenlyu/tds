@@ -34,3 +34,11 @@ func TestGetTradeTickers(t *testing.T) {
 		fmt.Println(i, date.Timestamp2SecondString(ticker))
 	}
 }
+
+func TestGetTradeDateRangeByDateString(t *testing.T) {
+	security := entity.ParseSecurityUnsafe("EOSQFUT.OKEX")
+	today := date.GetTodayString()
+
+	startTs, endTs, _, _ := GetTradeDateRangeByDateString(security, today)
+	fmt.Println(startTs, endTs)
+}

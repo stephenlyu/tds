@@ -25,7 +25,7 @@ func NewMongoDataSource(dbUrl string, dbName string) datasource.BaseDataSource {
 }
 
 func (this *_MongoDataSource) collectionName(security *Security, period Period) string {
-	return strings.ToLower(fmt.Sprintf("%s_%s_%s", period.ShortName(), security.Code, security.Exchange))
+	return strings.ToLower(fmt.Sprintf("%s_%s%s_%s", period.ShortName(), security.Category, security.Code, security.Exchange))
 }
 
 func (this *_MongoDataSource) GetData(security *Security, period Period) (error, []Record) {
