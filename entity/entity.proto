@@ -36,4 +36,5 @@ message ProtoTick {
     repeated double askVolumes = 20;
     repeated double bidPrices = 21;
     repeated double bidVolumes = 22;
+    sint32 side = 23;
 }

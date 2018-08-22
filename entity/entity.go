@@ -124,6 +124,12 @@ func RecordFromProtoBytes(bytes []byte) (*Record, error) {
 	}, nil
 }
 
+const (
+	TICK_SIDE_UNKNOWN = iota
+	TICK_SIDE_BUY
+	TICK_SIDE_SELL
+)
+
 type TickItem struct {
 	Code string
 	Timestamp uint64
@@ -147,6 +153,7 @@ type TickItem struct {
 	AskVolumes []float64
 	BidPrices []float64
 	BidVolumes []float64
+	Side int
 }
 
 func (this *TickItem) GetDate() string {
