@@ -71,17 +71,21 @@ func (this *_CSVDataSource) GetRangeData(security *Security, period Period, star
 	}
 
 	var start, end int
-	for i := range records {
-		if records[i].Date >= startDate {
-			start = i
-			break
+	if startDate > 0 {
+		for i := range records {
+			if records[i].Date >= startDate {
+				start = i
+				break
+			}
 		}
 	}
 	end = len(records)
-	for i := start + 1; i < len(records); i++ {
-		if records[i].Date > endDate {
-			end = i
-			break
+	if endDate > 0 {
+		for i := start + 1; i < len(records); i++ {
+			if records[i].Date > endDate {
+				end = i
+				break
+			}
 		}
 	}
 

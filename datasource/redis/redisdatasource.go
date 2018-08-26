@@ -65,6 +65,9 @@ func (this *_RedisDataSource) GetDataEx(security *Security, period Period, start
 
 func (this *_RedisDataSource) GetRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
 	key := this.key(security, period)
+	if endDate == 0 {
+		endDate = math.MaxUint64
+	}
 
 	array, err := this.redisPool.SortedSetRangeByScore(key, startDate, endDate, 0, 0)
 	if err != nil {
