@@ -49,7 +49,7 @@ func Plot(title string, titles []string, plotData map[string][]float64, pdfFile 
 
 	for i, title := range titles {
 		values := plotData[title]
-		points := convert(append([]float64{0}, values...))
+		points := convert(values)
 		line, err := plotter.NewLine(points)
 		line.LineStyle.Color = plotColors[i % len(plotColors)]
 		line.LineStyle.Width = 1
