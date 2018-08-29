@@ -1,35 +1,9 @@
 package stats
 
-import "math"
-
-func sum(values []float64) float64 {
-	ret := 0.
-	for _, v := range values {
-		ret += v
-	}
-	return ret
-}
-
-func mean(values []float64) float64 {
-	if len(values) == 0 {
-		return math.NaN()
-	}
-	return sum(values) / float64(len(values))
-}
-
-func std(values []float64) float64 {
-	if len(values) == 0 {
-		return math.NaN()
-	}
-	m := mean(values)
-	ss := 0.
-	for _, v := range values {
-		d := v - m
-		ss += d * d
-	}
-
-	return math.Sqrt(ss / float64(len(values)))
-}
+import (
+	"math"
+	"github.com/stephenlyu/tds/util"
+)
 
 func CalcSharpeRatio(y []float64, scale float64) float64 {
 	ret := make([]float64, len(y))
@@ -40,8 +14,8 @@ func CalcSharpeRatio(y []float64, scale float64) float64 {
 	}
 
 	// 计算夏普比率
-	mean := mean(ret)
-	std := std(ret)
+	mean := util.Mean(ret)
+	std := util.Std(ret)
 	var sharpe float64
 	if math.IsNaN(mean) || math.IsNaN(std) || std == 0. {
 		sharpe = -100.
