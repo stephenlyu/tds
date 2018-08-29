@@ -30,8 +30,8 @@ func TestIterTools(t *testing.T) {
 	fmt.Println(r)
 }
 
-func TestNewRangeBuffer(t *testing.T) {
-	rb := NewRangeBuffer(10)
+func TestNewRingBuffer(t *testing.T) {
+	rb := NewRingBuffer(10)
 	for i := 0; i < 93; i++ {
 		rb.Append(i)
 	}

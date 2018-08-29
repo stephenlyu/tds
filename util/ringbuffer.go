@@ -7,7 +7,7 @@ type RingBuffer struct {
 	Length int
 }
 
-func NewRangeBuffer(size int) *RingBuffer {
+func NewRingBuffer(size int) *RingBuffer {
 	return &RingBuffer{
 		Buffer: make([]interface{}, size),
 	}
