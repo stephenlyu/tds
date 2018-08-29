@@ -3,6 +3,7 @@ package util
 import (
 	"testing"
 	"fmt"
+	"github.com/docker/docker/pkg/random"
 )
 
 func TestUnzipFile(t *testing.T) {
@@ -27,4 +28,20 @@ func TestIterTools(t *testing.T) {
 
 	r := Production(a, b, c)
 	fmt.Println(r)
+}
+
+func Test_IncrementStd_Feed(t *testing.T) {
+	values := make([]float64, 100000)
+	for i := range values {
+		values[i] = random.Rand.Float64()
+	}
+
+	iStd := NewIncrementStd()
+
+	var ret float64
+	for _, v := range values {
+		ret = iStd.Feed(v)
+	}
+	std := Std(values)
+	fmt.Println(std, ret)
 }
