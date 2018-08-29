@@ -30,6 +30,18 @@ func TestIterTools(t *testing.T) {
 	fmt.Println(r)
 }
 
+func TestNewRangeBuffer(t *testing.T) {
+	rb := NewRangeBuffer(10)
+	for i := 0; i < 93; i++ {
+		rb.Append(i)
+	}
+	fmt.Println(rb.Top)
+	for i := 0; i < rb.Length; i++ {
+		fmt.Println(rb.Get(i))
+	}
+}
+
+
 func Test_IncrementStd_Feed(t *testing.T) {
 	values := make([]float64, 100000)
 	for i := range values {
