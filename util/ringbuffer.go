@@ -13,6 +13,13 @@ func NewRingBuffer(size int) *RingBuffer {
 	}
 }
 
+func (this *RingBuffer) Clone() *RingBuffer {
+	clone := *this
+	clone.Buffer = make([]interface{}, len(this.Buffer))
+	copy(clone.Buffer, this.Buffer)
+	return &clone
+}
+
 func (this *RingBuffer) Append(v interface{}) {
 	this.Buffer[this.Top] = v
 	if this.Length < len(this.Buffer) {
