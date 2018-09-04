@@ -43,6 +43,12 @@ var globalTradeDateDesc = map[string]*TradeDateDesc {
 		NonTradeDates: []string{},
 		DefaultTimeSpanDesc: ALL_DAY_TRADE_TIME_SPAN_DESC,
 	},
+	"BITMEX": &TradeDateDesc{
+		StartDate: "20140101",
+		WeekendTrading: true,
+		NonTradeDates: []string{},
+		DefaultTimeSpanDesc: ALL_DAY_TRADE_TIME_SPAN_DESC,
+	},
 }
 
 var globalTradeTimeSpanDesc = map[string]*TradeTimeSpanDesc {

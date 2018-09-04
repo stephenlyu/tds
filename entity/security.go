@@ -18,9 +18,11 @@ type Security struct {
 var (
 	aShareCodePattern, _ = regexp.Compile(`^()([0-9]+)\.([0-9a-zA-Z]+)$`)
 	okexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([TNQ]FUT)\.(OKEX)$`)
+	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
 	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
-	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern, dcSpotCodePattern, cnCommodityFutureCodePattern}
+	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern, bitmexFutureCodePattern,
+		dcSpotCodePattern, cnCommodityFutureCodePattern}
 )
 
 func ParseSecurity(securityCode string) (*Security, error) {
