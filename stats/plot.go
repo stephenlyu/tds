@@ -7,6 +7,7 @@ import (
 	"fmt"
 	"github.com/stephenlyu/tds/util"
 	"image/color"
+	"github.com/gonum/plot/vg/draw"
 )
 
 var plotColors = []color.Color {
@@ -25,7 +26,7 @@ var plotColors = []color.Color {
 	color.RGBA{0, 0, 0, 255},
 }
 
-func Plot(title string, titles []string, plotData map[string][]float64, pdfFile string) error {
+func Plot(title string, titles []string, xTicks []string, plotData map[string][]float64, pdfFile string) error {
 	util.Assert(len(titles) == len(plotData), "")
 	convert := func (values []float64) plotter.XYs {
 		pts := make(plotter.XYs, len(values))
@@ -44,11 +45,21 @@ func Plot(title string, titles []string, plotData map[string][]float64, pdfFile 
 
 	p.Title.Text = title
 	p.X.Label.Text = ""
-	p.Y.Label.Text = "Profit"
+	p.Y.Label.Text = ""
 	p.Y.Tick.Marker = round2Ticks{}
+
+	if xTicks != nil {
+		p.X.Tick.Marker = stringTicks{ticks: xTicks}
+		p.X.Tick.Label.Rotation = 0.7
+		p.X.Tick.Label.YAlign = draw.YCenter
+		p.X.Tick.Label.XAlign = draw.XRight
+	}
 
 	for i, title := range titles {
 		values := plotData[title]
+		if xTicks != nil {
+			util.Assert(len(values) == len(xTicks), "")
+		}
 		points := convert(values)
 		line, err := plotter.NewLine(points)
 		line.LineStyle.Color = plotColors[i % len(plotColors)]
@@ -75,6 +86,23 @@ func (round2Ticks) Ticks(min, max float64) []plot.Tick {
 			continue
 		}
 		tks[i].Label = fmt.Sprintf("%.02f", t.Value)
+	}
+	return tks
+}
+
+type stringTicks struct{
+	ticks []string
+}
+// Ticks computes the default tick marks, but inserts commas
+// into the labels for the major tick marks.
+func (this stringTicks) Ticks(min, max float64) []plot.Tick {
+	tks := plot.DefaultTicks{}.Ticks(min, max)
+	for i, t := range tks {
+		if t.Label == "" { // Skip minor ticks, they are fine.
+			continue
+		}
+		v := int(util.Round(t.Value, 0))
+		tks[i].Label = this.ticks[v]
 	}
 	return tks
 }
