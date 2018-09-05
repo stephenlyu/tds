@@ -69,7 +69,7 @@ func createDataSource(dsType string, params []string) datasource.BaseDataSource 
 	case "mongo":
 		mongoUrl := "localhost/data"
 		dbName := "data"
-		if len(params) >= 2 {
+		if len(params) > 2 {
 			logrus.Fatalf("Bad mongo params %s", strings.Join(params, "|"))
 		}
 		switch len(params) {
