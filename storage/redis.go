@@ -68,7 +68,6 @@ func (redisPool *RedisPool) SortedSetRangeByScore(key string, min, max uint64, o
 		args = append(args, count)
 	}
 
-	fmt.Printf("%+v\n", args)
 	values, err := redis.Strings(c.Do("ZRANGEBYSCORE", args...))
 
 	if err != nil && err.Error() == "redigo: nil returned" {
