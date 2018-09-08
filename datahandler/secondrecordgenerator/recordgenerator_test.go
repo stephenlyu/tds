@@ -1,4 +1,4 @@
-package recordgenerator
+package secondrecordgenerator
 
 import (
 	"testing"
@@ -37,7 +37,7 @@ func TestRecordGenerator_Feed(t *testing.T) {
 
 	security := entity.ParseSecurityUnsafe("EOSQFUT.OKEX")
 
-	rg := NewRecordGenerator(security)
+	rg := NewSecondRecordGenerator(security)
 
 	for i := range ticks {
 		r := rg.Feed(&ticks[i])

@@ -1,4 +1,4 @@
-package m1smoother
+package secondsmoother
 
 import (
 	"github.com/stephenlyu/tds/entity"
@@ -12,9 +12,9 @@ import (
 // 1分钟K线平滑程序，根据交易时刻表，使用前一根K线的收盘价生成K线，并补足缺失的K线
 //
 
-const MINUTE_MILLIS = 60 * 1000
+const SECOND_MILLIS = 1000
 
-type _M1Smoother struct {
+type _SecondSmoother struct {
 	security *entity.Security
 	prevRecord *entity.Record
 
@@ -23,36 +23,50 @@ type _M1Smoother struct {
 	startTs, endTs uint64
 }
 
-func NewM1Smoother(security *entity.Security, initPrevRecord *entity.Record) datahandler.RecordHandler {
+func NewSecondSmoother(security *entity.Security, initPrevRecord *entity.Record) datahandler.RecordHandler {
 	util.Assert(security != nil, "")
-	util.Assert(initPrevRecord != nil, "")
 
-	ret := &_M1Smoother{
+	ret := &_SecondSmoother{
 		security: security,
 		prevRecord: initPrevRecord,
 	}
 
-	ret.init(ret.prevRecord)
-	ret.calcCurrentIndex()
+	if initPrevRecord != nil {
+		ret.init(ret.prevRecord)
+		ret.calcCurrentIndex()
+	}
 
 	return ret
 }
 
-func (this *_M1Smoother) init(r *entity.Record) {
+func (this *_SecondSmoother) init(r *entity.Record) {
 	startTs, endTs, _, _ := tradedate.GetTradeDateRangeByDateString(this.security, r.GetDate())
-	this.tickers = tradedate.GetTradeTickers(this.security, r.Date)
+	minutes := tradedate.GetTradeTickers(this.security, r.Date)
+
+	tickers := make([]uint64, len(minutes) * 60)
+	for i, m := range minutes {
+		for j := 0; j < 60; j++ {
+			tickers[i * 60 + j] = m + uint64(j) * 1000
+		}
+	}
+	this.tickers = tickers
 
 	this.startTs, _ = date.SecondString2Timestamp(startTs)
 	this.endTs, _ = date.SecondString2Timestamp(endTs)
 }
 
-func (this *_M1Smoother) calcCurrentIndex() {
+func (this *_SecondSmoother) calcCurrentIndex() {
 	this.currentIndex = util.FindUInt64s(this.tickers, this.prevRecord.Date)
 	util.Assert(this.currentIndex != -1, "")
 }
 
-func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
-	util.Assert(this.prevRecord != nil, "")
+func (this *_SecondSmoother) Feed(r *entity.Record) []*entity.Record {
+	if this.prevRecord == nil {
+		this.prevRecord = r
+		this.init(r)
+		this.calcCurrentIndex()
+		return []*entity.Record{r}
+	}
 
 	switch {
 	case r.Date >= this.startTs && r.Date < this.endTs:
@@ -72,7 +86,7 @@ func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 	}
 
 	// 休息时段不进行平滑
-	if this.tickers[index] - this.tickers[index - 1] > MINUTE_MILLIS {
+	if this.tickers[index] - this.tickers[index - 1] > SECOND_MILLIS {
 		goto done
 	}
 
@@ -90,7 +104,6 @@ func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 
 done:
 	ret = append(ret, r)
-
 	this.prevRecord = r
 	this.currentIndex = index
 	return ret
