@@ -3,7 +3,6 @@ package storage
 import (
 	"github.com/garyburd/redigo/redis"
 	"time"
-	"fmt"
 )
 
 var (
