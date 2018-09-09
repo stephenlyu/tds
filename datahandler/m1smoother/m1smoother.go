@@ -54,9 +54,23 @@ func (this *_M1Smoother) calcCurrentIndex() {
 func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 	util.Assert(this.prevRecord != nil, "")
 
+	var ret []*entity.Record
 	switch {
 	case r.Date >= this.startTs && r.Date < this.endTs:
 	default:
+		// 前一日尾部缺数据，需要平滑出来
+		for i := this.currentIndex + 1; i < len(this.tickers); i++ {
+			ret = append(ret, &entity.Record{
+				Date: this.tickers[i],
+				Open: this.prevRecord.Close,
+				Close: this.prevRecord.Close,
+				High: this.prevRecord.Close,
+				Low: this.prevRecord.Close,
+				Volume: 0,
+				Amount: 0,
+			})
+		}
+
 		// 跨越交易日
 		this.init(r)
 		this.currentIndex = -1
@@ -64,17 +78,6 @@ func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 
 	index := util.FindUInt64s(this.tickers, r.Date)
 	util.Assert(index != -1, "")
-
-	var ret []*entity.Record
-	// 每日第一根K，不需要平滑
-	if index == 0 {
-		goto done
-	}
-
-	// 休息时段不进行平滑
-	if this.tickers[index] - this.tickers[index - 1] > MINUTE_MILLIS {
-		goto done
-	}
 
 	for i := this.currentIndex + 1; i < index; i++ {
 		ret = append(ret, &entity.Record{
@@ -88,7 +91,6 @@ func (this *_M1Smoother) Feed(r *entity.Record) []*entity.Record {
 		})
 	}
 
-done:
 	ret = append(ret, r)
 
 	this.prevRecord = r

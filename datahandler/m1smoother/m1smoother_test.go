@@ -34,3 +34,18 @@ func Test_M1Smoother_Feed(t *testing.T) {
 		fmt.Printf("%+v\n", r)
 	}
 }
+
+func Test_M1SmootherCrossDay(t *testing.T) {
+	security := entity.ParseSecurityUnsafe("EOSQFUT.OKEX")
+
+	r0 := entity.Record{Date:1534236840000, Open:4.156, Close:4.159, High: 4.159, Low:4.156, Volume:40, Amount:400}
+	r1 := entity.Record{Date:1534237740000, Open:4.156, Close:4.159, High: 4.159, Low:4.156, Volume:40, Amount:400}
+
+	var rs []*entity.Record
+
+	h := NewM1Smoother(security, &r0)
+	rs = h.Feed(&r1)
+	for _, r := range rs {
+		fmt.Printf("%+v\n", r)
+	}
+}
