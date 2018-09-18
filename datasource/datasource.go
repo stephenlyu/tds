@@ -35,6 +35,22 @@ type CompositeDataSource interface {
 	AddSubDatasource(ds BaseDataSource)
 }
 
+type DateRange struct {
+	Security *Security
+	StartDate uint64		// inclusive, 0 if no start date
+	EndDate uint64			// exclusive, 0 if no end date
+}
+
+type DateRangeMapper interface {
+	MapDateRanges(security *Security) []DateRange
+}
+
+type MappedDataSource interface {
+	BaseDataSource
+	SetMapper(mapper DateRangeMapper)
+	SetTargetDataSource(ds BaseDataSource)
+}
+
 type DataSource interface {
 	InfoExDataSource
 	BaseDataSource
