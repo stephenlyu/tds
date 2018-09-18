@@ -30,6 +30,11 @@ type BaseDataSource interface {
 	RemoveData(security *Security, period Period, startDate, endDate uint64) error
 }
 
+type CompositeDataSource interface {
+	BaseDataSource
+	AddSubDatasource(ds BaseDataSource)
+}
+
 type DataSource interface {
 	InfoExDataSource
 	BaseDataSource

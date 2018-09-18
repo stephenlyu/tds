@@ -8,6 +8,7 @@ import (
 	"github.com/stephenlyu/tds/entity"
 	"fmt"
 	"github.com/stephenlyu/tds/datasource/csv"
+	"github.com/stephenlyu/tds/date"
 )
 
 func Test_CSVDataSource_SaveData(t *testing.T) {
@@ -44,4 +45,21 @@ func Test_CSVDataSource_GetData(t *testing.T) {
 	fmt.Println(len(data))
 	fmt.Printf("%+v\n", &data[0])
 	fmt.Printf("%+v\n", &data[len(data) - 1])
+}
+
+func Test_CSVDataSource_GetRangeData(t *testing.T) {
+	csvDs := csvdatasource.NewCSVDataSource("csv")
+	security, err := entity.ParseSecurity("000001.SZ")
+	util.Assert(err == nil, "")
+	util.Assert(security != nil, "")
+
+	err, period1 := period.PeriodFromString("M1")
+	util.Assert(err == nil, "")
+
+	startDate, _ := date.SecondString2Timestamp("20150217 14:31:00")
+	err, data := csvDs.GetRangeData(security, period1, startDate, startDate)
+	util.Assert(err == nil, "")
+	for i := range data {
+		fmt.Printf("%+v\n", &data[i])
+	}
 }

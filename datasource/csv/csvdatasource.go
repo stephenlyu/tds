@@ -69,29 +69,35 @@ func (this *_CSVDataSource) GetRangeData(security *Security, period Period, star
 	if err != nil {
 		return err, nil
 	}
-
 	var start, end int
 	if startDate > 0 {
+		start = -1
 		for i := range records {
 			if records[i].Date >= startDate {
 				start = i
 				break
 			}
 		}
+		if start == -1 {
+			return nil, nil
+		}
 	}
-	end = len(records)
+
+	end = len(records) - 1
 	if endDate > 0 {
-		for i := start + 1; i < len(records); i++ {
+		for i := start; i < len(records); i++ {
 			if records[i].Date > endDate {
+				end = i - 1
+				break
+			} else if records[i].Date == endDate {
 				end = i
 				break
 			}
 		}
 	}
-
-	if end > start {
-		ret := make([]Record, end - start)
-		copy(ret, records[start:end])
+	if end >= start {
+		ret := make([]Record, end - start + 1)
+		copy(ret, records[start:end + 1])
 		return nil, ret
 	}
 
@@ -99,12 +105,41 @@ func (this *_CSVDataSource) GetRangeData(security *Security, period Period, star
 }
 
 func (this *_CSVDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
-	panic("unimplented")
-	return nil, nil
+	err, records := this.GetData(security, period)
+	if err != nil {
+		return err, nil
+	}
+
+	end := len(records) - 1
+	if endDate > 0 {
+		for i := len(records) - 1; i >= 0; i-- {
+			if records[i].Date <= endDate {
+				end = i
+				break
+			} else if i == 0 {
+				end = -1
+			}
+		}
+	}
+
+	start := end + 1 - count
+	if start < 0 {
+		start = 0
+	}
+
+	return nil, records[start:end+1]
 }
 
 func (this *_CSVDataSource) GetLastRecord(security *Security, period Period) (error, *Record) {
-	panic("unimplented")
+	err, records := this.GetData(security, period)
+	if err != nil {
+		return err, nil
+	}
+
+	if len(records) > 0 {
+		r := records[len(records) - 1]
+		return nil, &r
+	}
 	return nil, nil
 }
 
