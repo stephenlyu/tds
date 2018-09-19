@@ -53,7 +53,7 @@ func (this *_MappedDataSource) GetData(security *Security, period Period) (error
 
 func (this *_MappedDataSource) GetDataEx(security *Security, period Period, startDate uint64, count int) (error, []Record) {
 	panic("Unimplemented")
-	return
+	return nil, nil
 }
 
 func (this *_MappedDataSource) GetRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
@@ -86,12 +86,12 @@ func (this *_MappedDataSource) GetRangeData(security *Security, period Period, s
 
 func (this *_MappedDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
 	panic("Unimplemented")
-	return
+	return nil, nil
 }
 
 func (this *_MappedDataSource) GetLastRecord(security *Security, period Period) (error, *Record) {
 	panic("Unimplemented")
-	return
+	return nil, nil
 }
 
 func (this *_MappedDataSource) AppendData(security *Security, period Period, data []Record) error {
