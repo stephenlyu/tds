@@ -23,6 +23,15 @@ func (this *_mapper) MapDateRanges(security *Security) []DateRange {
 	}
 }
 
+type _nomapper struct {
+}
+
+func (this *_nomapper) MapDateRanges(security *Security) []DateRange {
+	return []DateRange {
+		{Security: security},
+	}
+}
+
 func Test_MappedDataSource_GetData(t *testing.T) {
 	csvDs := csvdatasource.NewCSVDataSource("csv")
 
@@ -90,6 +99,27 @@ func Test_MappedDataSource_GetRangeData(t *testing.T) {
 	fmt.Println("====================================")
 
 	err, data = mappedDs.GetRangeData(security, period1, 0, 0)
+	util.Assert(err == nil, "")
+	for i := range data {
+		fmt.Printf("%+v\n", &data[i])
+	}
+}
+
+func Test_MappedDataSource_GetData_Nomapper(t *testing.T) {
+	csvDs := csvdatasource.NewCSVDataSource("csv")
+
+	security, err := ParseSecurity("000001.SZ")
+	util.Assert(err == nil, "")
+	util.Assert(security != nil, "")
+
+	err, period1 := period.PeriodFromString("M1")
+	util.Assert(err == nil, "")
+
+	mappedDs := mappeddatasource.NewMapperDataSource()
+	mappedDs.SetMapper(&_nomapper{})
+	mappedDs.SetTargetDataSource(csvDs)
+
+	err, data := mappedDs.GetData(security, period1)
 	util.Assert(err == nil, "")
 	for i := range data {
 		fmt.Printf("%+v\n", &data[i])
