@@ -154,6 +154,8 @@ type TickItem struct {
 	BidPrices []float64
 	BidVolumes []float64
 	Side int
+	BuyVolume float64
+	SellVolume float64
 }
 
 func (this *TickItem) GetDate() string {
@@ -188,6 +190,9 @@ func (this *TickItem) ToProtoBytes() ([]byte, error) {
 		AskVolumes: this.AskVolumes,
 		BidPrices: this.BidPrices,
 		BidVolumes: this.BidVolumes,
+		Side: int32(this.Side),
+		BuyVolume: this.BuyVolume,
+		SellVolume: this.SellVolume,
 	}
 
 	return proto.Marshal(&pr)
@@ -223,5 +228,8 @@ func TickItemFromProtoBytes(bytes []byte) (*TickItem, error) {
 		AskVolumes: pr.AskVolumes,
 		BidPrices: pr.BidPrices,
 		BidVolumes: pr.BidVolumes,
+		Side: int(pr.Side),
+		BuyVolume: pr.BuyVolume,
+		SellVolume: pr.SellVolume,
 	}, nil
 }
