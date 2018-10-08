@@ -99,6 +99,8 @@ func (this *_SecondSmoother) Feed(r *entity.Record) []*entity.Record {
 			Low: this.prevRecord.Close,
 			Volume: 0,
 			Amount: 0,
+			BuyVolume: 0,
+			SellVolume: 0,
 		})
 	}
 
