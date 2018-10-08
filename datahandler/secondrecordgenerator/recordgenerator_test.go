@@ -11,7 +11,7 @@ import (
 )
 
 func loadTestData() []entity.TickItem {
-	raw, err := ioutil.ReadFile("../tick.csv")
+	raw, err := ioutil.ReadFile("../20181009/EOSQFUT.OKEX")
 	util.Assert(err == nil, "")
 
 	var ret []entity.TickItem
@@ -26,7 +26,6 @@ func loadTestData() []entity.TickItem {
 		err = json.Unmarshal([]byte(line), &tick)
 		util.Assert(err == nil, "")
 
-		fmt.Printf("%+v\n", &tick)
 		ret = append(ret, tick)
 	}
 	return ret

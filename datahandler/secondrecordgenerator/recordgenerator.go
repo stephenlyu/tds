@@ -39,6 +39,8 @@ func (this *SecondRecordGenerator) Feed(tick *entity.TickItem) *entity.Record {
 			Low: tick.Low,
 			Volume: tick.Volume,
 			Amount: tick.Amount,
+			BuyVolume: tick.BuyVolume,
+			SellVolume: tick.SellVolume,
 		}
 
 	} else {
@@ -47,6 +49,8 @@ func (this *SecondRecordGenerator) Feed(tick *entity.TickItem) *entity.Record {
 		this.Current.Low = math.Min(this.Current.Low, tick.Low)
 		this.Current.Volume += tick.Volume
 		this.Current.Amount += tick.Amount
+		this.Current.BuyVolume += tick.BuyVolume
+		this.Current.SellVolume += tick.SellVolume
 	}
 
 	return this.Current

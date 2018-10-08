@@ -18,6 +18,8 @@ type Record struct {
 	Low float64
 	Volume float64
 	Amount float64
+	BuyVolume float64
+	SellVolume float64
 }
 
 type RecordEx struct {
@@ -80,8 +82,18 @@ func (this *Record) GetVolume() float64 {
 	return this.Volume
 }
 
+func (this *Record) GetBuyVolume() float64 {
+	return this.BuyVolume
+}
+
+func (this *Record) GetSellVolume() float64 {
+	return this.SellVolume
+}
+
 func (this *Record) String() string {
-	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f}`, this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(), this.GetAmount(), this.GetVolume())
+	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f BuyVolume: %.08f SellVolume: %.08f}`,
+		this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(),
+		this.GetAmount(), this.GetVolume(), this.GetBuyVolume(), this.GetSellVolume())
 }
 
 func (this *Record) ToJsonBytes() ([]byte, error) {
