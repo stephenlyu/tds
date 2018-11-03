@@ -42,3 +42,19 @@ func TestGetTradeDateRangeByDateString(t *testing.T) {
 	startTs, endTs, _, _ := GetTradeDateRangeByDateString(security, today)
 	fmt.Println(startTs, endTs)
 }
+
+func TestGetNonNightTradeTickers(t *testing.T) {
+	security := entity.ParseSecurityUnsafe("J1901.DCE")
+	ts, _ := date.DayString2Timestamp("20181008")
+	tickers := GetTradeTickers(security, ts)
+	for i, ticker := range tickers {
+		fmt.Println(i, date.Timestamp2SecondString(ticker))
+	}
+}
+
+func TestToTradeTicker(t *testing.T) {
+	security := entity.ParseSecurityUnsafe("J1901.DCE")
+	ts, _ := date.SecondString2Timestamp("20181008 15:03:00")
+	ticker := ToTradeTicker(security, ts)
+	fmt.Println(date.Timestamp2SecondString(ticker))
+}

@@ -5,9 +5,12 @@ import (
 	"github.com/stephenlyu/tds/util"
 	"github.com/stephenlyu/tds/date"
 	"sync"
+	"github.com/deckarep/golang-set"
+	"github.com/stephenlyu/tds"
+	"time"
+	"fmt"
+	"sort"
 )
-
-// TODO:
 
 const (
 	TRADE_DATE_SEP_TIME = "17:00:00"
@@ -18,51 +21,17 @@ const (
 	MINUTES_PER_DAY = DAY_MILLIS / MINUTE_MILLIS
 )
 
-type TimeSpan struct {
-	Start, End string
-}
-
-type TradeTimeSpanDesc struct {
-	Spans []TimeSpan
-}
-
-type TradeDateDesc struct {
-	StartDate string
-	WeekendTrading bool						// true 表示周末交易
-	NonTradeDates []string
-	DefaultTimeSpanDesc *TradeTimeSpanDesc
-}
-
-var ALL_DAY_TRADE_TIME_SPAN_DESC = &TradeTimeSpanDesc{
-}
-
-var globalTradeDateDesc = map[string]*TradeDateDesc {
-	"OKEX": &TradeDateDesc{
-		StartDate: "20140101",
-		WeekendTrading: true,
-		NonTradeDates: []string{},
-		DefaultTimeSpanDesc: ALL_DAY_TRADE_TIME_SPAN_DESC,
-	},
-	"BITMEX": &TradeDateDesc{
-		StartDate: "20140101",
-		WeekendTrading: true,
-		NonTradeDates: []string{},
-		DefaultTimeSpanDesc: ALL_DAY_TRADE_TIME_SPAN_DESC,
-	},
-}
-
-var globalTradeTimeSpanDesc = map[string]*TradeTimeSpanDesc {
-	// TODO:
+type _TickerCacheItem struct {
+	startTs, endTs uint64
+	Tickers        []uint64
 }
 
 type _TradeDateCache map[string][]string
+type _TickerCache map[string]*_TickerCacheItem
 
 var tradeDateCache = make(_TradeDateCache) // key: exchange  	value: list of trade date
+var tickerCache = make(_TickerCache)
 var tradeDateCacheLock sync.RWMutex
-
-func (this *TradeTimeSpanDesc) isAllDay() bool {
-	return this == ALL_DAY_TRADE_TIME_SPAN_DESC
-}
 
 func (this *_TradeDateCache) Set(exchange string, dates []string) {
 	tradeDateCacheLock.Lock()
@@ -78,6 +47,20 @@ func (this *_TradeDateCache) Get(exchange string) []string {
 	return r
 }
 
+func (this *_TickerCache) Set(commCode string, item  *_TickerCacheItem) {
+	tradeDateCacheLock.Lock()
+	defer tradeDateCacheLock.Unlock()
+	(*this)[commCode] = item
+}
+
+func (this *_TickerCache) Get(commCode string) *_TickerCacheItem {
+	tradeDateCacheLock.RLock()
+	defer tradeDateCacheLock.RUnlock()
+
+	r, _ := (*this)[commCode]
+	return r
+}
+
 func GetSecurityTradeDates(security *entity.Security) []string {
 	ex := security.GetExchange()
 	ret := tradeDateCache.Get(ex)
@@ -85,19 +68,31 @@ func GetSecurityTradeDates(security *entity.Security) []string {
 		return ret
 	}
 
-	dd, ok := globalTradeDateDesc[ex]
-	util.Assert(ok, "")
+	meta := TRADE_META.GetTradeDateMeta(ex)
+	weekendTrading := TRADE_META.IsWeekendTrading(ex)
 
-	startTs, err := date.DayString2Timestamp(dd.StartDate)
+	startTs, err := date.DayString2Timestamp(meta.From)
 	util.Assert(err == nil, "")
 
-	ret = nil
-	for v := startTs; v < util.Tick() + DAY_MILLIS * 30; v += DAY_MILLIS {
-		d := date.Timestamp2DayString(v)
-		if util.InStrings(d, dd.NonTradeDates) {
+	endTs, err := date.DayString2Timestamp(meta.To)
+	util.Assert(err == nil, "")
+
+	nonDatesSet := mapset.NewSet()
+	for _, d := range meta.NonTradingDates {
+		nonDatesSet.Add(d)
+	}
+
+	for ts := startTs; ts <= endTs; ts += DAY_MILLIS {
+		d := time.Unix(int64(ts) / 1000, (int64(ts) % 1000) * int64(time.Millisecond)).In(tds.Local)
+		ds := d.Format(date.DAY_FORMAT)
+		if nonDatesSet.Contains(ds) {
 			continue
 		}
-		ret = append(ret, d)
+
+		if !weekendTrading && (d.Weekday() == time.Saturday || d.Weekday() == time.Sunday) {
+			continue
+		}
+		ret = append(ret, ds)
 	}
 
 	tradeDateCache.Set(ex, ret)
@@ -135,25 +130,23 @@ func GetTradeDateRange(security *entity.Security, dateString string) (startTs st
 	return
 }
 
-func getTradeTimeSpanDesc(security *entity.Security) *TradeTimeSpanDesc {
-	if s, ok := globalTradeTimeSpanDesc[security.GetExchange()]; ok {
-		return s
-	}
-
-	if dd, ok := globalTradeDateDesc[security.GetExchange()]; ok {
-		return dd.DefaultTimeSpanDesc
-	}
-
-	util.UnreachableCode()
-	return nil
-}
-
 func ToTradeTicker(security *entity.Security, timestamp uint64) uint64 {
-	tsd := getTradeTimeSpanDesc(security)
+	tickers := GetTradeTickers(security, timestamp)
+	if timestamp < tickers[0] {
+		return tickers[0]
+	}
+	lastTicker := tickers[len(tickers) - 1]
+	if timestamp >= lastTicker {
+		return lastTicker
+	}
 
-	if tsd.isAllDay() {
-		timestamp = timestamp / MINUTE_MILLIS * MINUTE_MILLIS
-		return timestamp
+	for i, ticker := range tickers {
+		if i == 0 {
+			continue
+		}
+		if timestamp < ticker {
+			return tickers[i - 1]
+		}
 	}
 
 	util.UnreachableCode()
@@ -161,21 +154,67 @@ func ToTradeTicker(security *entity.Security, timestamp uint64) uint64 {
 }
 
 func GetTradeTickers(security *entity.Security, timestamp uint64) []uint64 {
-	tsd := getTradeTimeSpanDesc(security)
-	dateString := date.Timestamp2SecondString(timestamp)
-	startTs, endTs, _, _ := GetTradeDateRangeByDateString(security, dateString)
-	if tsd.isAllDay() {
-		st, _ := date.SecondString2Timestamp(startTs)
-		et, _ := date.SecondString2Timestamp(endTs)
-
-		ret := make([]uint64, MINUTES_PER_DAY)
-
-		for i, ts := 0, st; ts < et; i, ts = i + 1, ts + MINUTE_MILLIS {
-			ret[i] = ts
-		}
-		return ret
+	commCode := fmt.Sprintf("%s.%s", security.Category, security.Exchange)
+	item := tickerCache.Get(commCode)
+	if item != nil && item.startTs <= timestamp && timestamp < item.endTs {
+		return item.Tickers
 	}
 
-	util.UnreachableCode()
-	return nil
+	dateString := date.Timestamp2SecondString(timestamp)
+	startTs, endTs, tradeDate, preTradeDate := GetTradeDateRangeByDateString(security, dateString)
+
+	isNonNight := TRADE_META.IsNonNightDate(security.Exchange, tradeDate)
+
+	rawSpans := TRADE_META.GetDateTimeSpans(security, tradeDate)
+	// 过滤夜盘的Spans
+	var spans []TimeSpan
+	if !isNonNight {
+		spans = rawSpans
+	} else {
+		for _, span := range rawSpans {
+			if span.Start >= TRADE_DATE_DAY_START && span.Start < TRADE_DATE_SEP_TIME {
+				spans = append(spans, span)
+			}
+		}
+	}
+
+	// 根据Spans计算Tickers
+
+	var tickers []uint64
+
+	for _, span := range spans {
+		start, end := span.Start, span.End
+		if end == "24:00:00" {
+			end = "23:59:59"
+		}
+
+		var from, to string
+		if start >= TRADE_DATE_SEP_TIME {
+			from = fmt.Sprintf("%s %s", preTradeDate, start)
+			to = fmt.Sprintf("%s %s", preTradeDate, end)
+		} else {
+			from = fmt.Sprintf("%s %s", tradeDate, start)
+			to = fmt.Sprintf("%s %s", tradeDate, end)
+		}
+
+		fromTs, _ := date.SecondString2Timestamp(from)
+		toTs, _ := date.SecondString2Timestamp(to)
+		for ts := fromTs; ts < toTs; ts += MINUTE_MILLIS {
+			tickers = append(tickers, ts)
+		}
+	}
+
+	sort.SliceStable(tickers, func(i,j int) bool {
+		return tickers[i] < tickers[j]
+	})
+
+	start, _ := date.SecondString2Timestamp(startTs)
+	end, _ := date.SecondString2Timestamp(endTs)
+	tickerCache.Set(commCode, &_TickerCacheItem{
+		startTs: start,
+		endTs: end,
+		Tickers: tickers,
+	})
+
+	return tickers
 }
