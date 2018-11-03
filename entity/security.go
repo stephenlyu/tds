@@ -5,6 +5,7 @@ import (
 	"errors"
 	"strings"
 	"github.com/stephenlyu/tds/util"
+	"fmt"
 )
 
 type Security struct {
@@ -61,6 +62,10 @@ func ParseSecurityUnsafe(securityCode string) (*Security) {
 
 func (this *Security) String() string {
 	return this.fullCode
+}
+
+func (this *Security) CatCode() string {
+	return fmt.Sprintf("%s.%s", this.GetCategory(), this.Exchange)
 }
 
 func (this *Security) GetCategory() string {
