@@ -111,11 +111,33 @@ var TRADE_META *TradeMeta = &TradeMeta{
 				},
 			},
 		},
+		"BITMEX": []TimeSpans{
+			{
+				From: "20130706",
+				To: "20380101",
+				Spans: []TimeSpan{
+					{
+						Start: "00:00:00",
+						End: "17:00:00",
+					},
+					{
+						Start: "17:00:00",
+						End: "24:00:00",
+					},
+				},
+			},
+		},
 	},
 	NonNightDates: map[string][]string{
 	},
 	TradeDateMeta: map[string]*TradeDateMeta {
 		"OKEX": {
+			From: "20150101",
+			To: "20191230",
+			NonTradingDates: []string{
+			},
+		},
+		"BITMEX": {
 			From: "20150101",
 			To: "20191230",
 			NonTradingDates: []string{
