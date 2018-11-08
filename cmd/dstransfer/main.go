@@ -54,7 +54,7 @@ func createDataSource(dsType string, params []string) datasource.BaseDataSource 
 	case "redis":
 		redisUrl := "localhost:6379"
 		redisPass := ""
-		if len(params) >= 2 {
+		if len(params) > 2 {
 			logrus.Fatalf("Bad redis params %s", strings.Join(params, "|"))
 		}
 		switch len(params) {
