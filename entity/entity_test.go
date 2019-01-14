@@ -10,7 +10,7 @@ import (
 
 func TestSecurity(t *testing.T) {
 	codes := []string{
-		"600000.SH", "EOSQFUT.OKEX", "BTCFUT.BITMEX",
+		"600000.SH", "EOSQFUT.OKEX", "BTCFUT.BITMEX", "EOSFUT.PLO",
 		"BTCUSDTSPOT.HUOBI", "RB1901.SHFE",
 	}
 
