@@ -19,11 +19,13 @@ type Security struct {
 var (
 	aShareCodePattern, _ = regexp.Compile(`^()([0-9]+)\.([0-9a-zA-Z]+)$`)
 	okexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([TNQ]FUT)\.(OKEX)$`)
+	okexSwapCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(OKEX)$`)
 	ploFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(PLO)$`)
 	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
 	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
-	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern, bitmexFutureCodePattern,
+	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern,
+		okexSwapCodePattern, bitmexFutureCodePattern,
 		ploFutureCodePattern,
 		dcSpotCodePattern, cnCommodityFutureCodePattern}
 )
