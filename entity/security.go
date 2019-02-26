@@ -21,11 +21,12 @@ var (
 	okexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([TNQ]FUT)\.(OKEX)$`)
 	okexSwapCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(OKEX)$`)
 	ploFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(PLO)$`)
-	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
+	bitmexSwapCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
+	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([A-Z][0-9]+)\.(BITMEX)$`)
 	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
 	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern,
-		okexSwapCodePattern, bitmexFutureCodePattern,
+		okexSwapCodePattern, bitmexSwapCodePattern, bitmexFutureCodePattern,
 		ploFutureCodePattern,
 		dcSpotCodePattern, cnCommodityFutureCodePattern}
 )
