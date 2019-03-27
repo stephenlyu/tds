@@ -23,12 +23,13 @@ var (
 	ploFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT|INDEX)\.(PLO)$`)
 	bitmexSwapCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
 	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([A-Z][0-9]+)\.(BITMEX)$`)
-	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+)(SPOT)\.([A-Z]+)$`)
+	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+_[A-Z]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
 	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern,
 		okexSwapCodePattern, bitmexSwapCodePattern, bitmexFutureCodePattern,
 		ploFutureCodePattern,
-		dcSpotCodePattern, cnCommodityFutureCodePattern}
+		dcSpotCodePattern,
+		cnCommodityFutureCodePattern}
 )
 
 func ParseSecurity(securityCode string) (*Security, error) {
