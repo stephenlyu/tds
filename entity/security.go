@@ -93,6 +93,10 @@ func (this *Security) IsSpot() bool {
 	return this.Code == "SPOT"
 }
 
+func (this *Security) IsIndex() bool {
+	return this.Code == "INDEX"
+}
+
 func (this *Security) IsDigitCurrency() bool {
 	return util.InStrings(this.Exchange, []string{"OKEX", "HUOBI"})
 }

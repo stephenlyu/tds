@@ -22,7 +22,7 @@ func TestSecurity(t *testing.T) {
 		util.Assert(err == nil, fmt.Sprintf("%+v", err))
 		util.Assert(security != nil, "")
 		util.Assert(security.String() == code, code)
-		fmt.Printf("cat: %s code: %s exchange: %s\n", security.GetCategory(), security.GetCode(), security.GetExchange())
+		fmt.Printf("cat: %s code: %s exchange: %s isIndex: %v\n", security.GetCategory(), security.GetCode(), security.GetExchange(), security.IsIndex())
 	}
 }
 
