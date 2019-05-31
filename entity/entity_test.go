@@ -17,6 +17,7 @@ func TestSecurity(t *testing.T) {
 		"BTC_USDTSPOT.HUOBI", "RB1901.SHFE",
 		"BTC_USDTSPOT.GATE",
 		"BTCINDEX.OKEX",
+		"BTCFL.OKEX",
 	}
 
 	for _, code := range codes {

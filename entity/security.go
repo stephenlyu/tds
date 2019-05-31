@@ -26,12 +26,14 @@ var (
 	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+_[A-Z]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
 	indexPattern, _ = regexp.Compile(`^([A-Z]+)(FUT|INDEX)\.([A-Z]+)$`)
+	flPattern, _ = regexp.Compile(`^([A-Z]+)(FL)\.([A-Z]+)$`)
 	codePatterns = []*regexp.Regexp{aShareCodePattern, okexFutureCodePattern,
 		okexSwapCodePattern, bitmexSwapCodePattern, bitmexFutureCodePattern,
 		ploFutureCodePattern,
 		dcSpotCodePattern,
 		cnCommodityFutureCodePattern,
 		indexPattern,
+		flPattern,
 	}
 )
 
