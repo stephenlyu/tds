@@ -8,7 +8,6 @@ import (
 	"gopkg.in/mgo.v2/bson"
 	"github.com/stephenlyu/tds/datasource"
 	"strings"
-	"math"
 )
 
 type _MongoDataSource struct {
@@ -73,10 +72,6 @@ func (this *_MongoDataSource) GetRangeData(security *Security, period Period, st
 }
 
 func (this *_MongoDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
-	if endDate == 0 {
-		endDate = math.MaxUint64
-	}
-
 	colName := this.collectionName(security, period)
 
 	cond := bson.M{}
