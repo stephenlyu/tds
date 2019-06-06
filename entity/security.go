@@ -23,7 +23,7 @@ var (
 	ploFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT|INDEX)\.(PLO)$`)
 	bitmexSwapCodePattern, _ = regexp.Compile(`^([A-Z]+)(FUT)\.(BITMEX)$`)
 	bitmexFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([A-Z][0-9]+)\.(BITMEX)$`)
-	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z]+_[A-Z]+)(SPOT)\.([A-Z]+)$`)
+	dcSpotCodePattern, _  = regexp.Compile(`^([A-Z0-9]+_[A-Z0-9]+)(SPOT)\.([A-Z]+)$`)
 	cnCommodityFutureCodePattern, _ = regexp.Compile(`^([A-Z]+)([0-9]+)\.([A-Z]+)$`)
 	indexPattern, _ = regexp.Compile(`^([A-Z]+)(FUT|INDEX)\.([A-Z]+)$`)
 	flPattern, _ = regexp.Compile(`^([A-Z]+)(FL)\.([A-Z]+)$`)
