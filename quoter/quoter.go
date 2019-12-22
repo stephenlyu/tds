@@ -4,6 +4,7 @@ import "github.com/stephenlyu/tds/entity"
 
 type QuoterCallback interface {
 	OnTickItem(tick *entity.TickItem)
+	OnError(error)
 }
 
 type Quoter interface {
