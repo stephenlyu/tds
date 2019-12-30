@@ -133,13 +133,13 @@ var TRADE_META *TradeMeta = &TradeMeta{
 	TradeDateMeta: map[string]*TradeDateMeta {
 		"OKEX": {
 			From: "20150101",
-			To: "20191230",
+			To: "20381230",
 			NonTradingDates: []string{
 			},
 		},
 		"BITMEX": {
 			From: "20150101",
-			To: "20191230",
+			To: "20381230",
 			NonTradingDates: []string{
 			},
 		},
