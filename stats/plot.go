@@ -1,17 +1,18 @@
 package stats
 
 import (
-	"github.com/gonum/plot/plotter"
-	"github.com/gonum/plot"
-	"github.com/gonum/plot/vg"
 	"fmt"
-	"github.com/stephenlyu/tds/util"
 	"image/color"
-	"github.com/gonum/plot/vg/draw"
 	"math"
+
+	"github.com/stephenlyu/tds/util"
+	"gonum.org/v1/plot"
+	"gonum.org/v1/plot/plotter"
+	"gonum.org/v1/plot/vg"
+	"gonum.org/v1/plot/vg/draw"
 )
 
-var plotColors = []color.Color {
+var plotColors = []color.Color{
 	color.RGBA{255, 0, 0, 255},
 	color.RGBA{0, 255, 0, 255},
 	color.RGBA{0, 0, 255, 255},
@@ -29,7 +30,7 @@ var plotColors = []color.Color {
 
 func Plot(title string, titles []string, xTicks []string, plotData map[string][]float64, pdfFile string, useLogScale bool) error {
 	util.Assert(len(titles) == len(plotData), "")
-	convert := func (values []float64) plotter.XYs {
+	convert := func(values []float64) plotter.XYs {
 		pts := make(plotter.XYs, len(values))
 		for i := range pts {
 			pts[i].X = float64(i)
@@ -42,10 +43,7 @@ func Plot(title string, titles []string, xTicks []string, plotData map[string][]
 		return pts
 	}
 
-	p, err := plot.New()
-	if err != nil {
-		return err
-	}
+	p := plot.New()
 
 	p.Title.Text = title
 	p.X.Label.Text = ""
@@ -66,7 +64,7 @@ func Plot(title string, titles []string, xTicks []string, plotData map[string][]
 		}
 		points := convert(values)
 		line, err := plotter.NewLine(points)
-		line.LineStyle.Color = plotColors[i % len(plotColors)]
+		line.LineStyle.Color = plotColors[i%len(plotColors)]
 		line.LineStyle.Width = 1
 
 		if err != nil {
@@ -80,9 +78,10 @@ func Plot(title string, titles []string, xTicks []string, plotData map[string][]
 	return p.Save(297*vg.Millimeter, 210*vg.Millimeter, pdfFile)
 }
 
-type round2Ticks struct{
+type round2Ticks struct {
 	useLogScale bool
 }
+
 // Ticks computes the default tick marks, but inserts commas
 // into the labels for the major tick marks.
 func (this round2Ticks) Ticks(min, max float64) []plot.Tick {
@@ -93,7 +92,7 @@ func (this round2Ticks) Ticks(min, max float64) []plot.Tick {
 		}
 		var value float64
 		if this.useLogScale {
-			value =  math.Exp(t.Value)
+			value = math.Exp(t.Value)
 		} else {
 			value = t.Value
 		}
@@ -102,9 +101,10 @@ func (this round2Ticks) Ticks(min, max float64) []plot.Tick {
 	return tks
 }
 
-type stringTicks struct{
+type stringTicks struct {
 	ticks []string
 }
+
 // Ticks computes the default tick marks, but inserts commas
 // into the labels for the major tick marks.
 func (this stringTicks) Ticks(min, max float64) []plot.Tick {

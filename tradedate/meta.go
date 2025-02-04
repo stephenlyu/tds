@@ -8,7 +8,7 @@ import (
 	"github.com/stephenlyu/tds/entity"
 	"fmt"
 	"github.com/stephenlyu/tds/util"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 )
 
 type TimeSpan struct {

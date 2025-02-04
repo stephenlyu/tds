@@ -7,7 +7,7 @@ import (
 	"github.com/stephenlyu/tds/entity"
 	"flag"
 	"github.com/stephenlyu/tds/util"
-	"github.com/Sirupsen/logrus"
+	"github.com/sirupsen/logrus"
 	"strings"
 	"github.com/stephenlyu/tds/datasource/csv"
 	"github.com/stephenlyu/tds/datasource/redis"

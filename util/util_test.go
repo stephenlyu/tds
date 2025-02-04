@@ -1,9 +1,9 @@
 package util
 
 import (
-	"testing"
 	"fmt"
-	"github.com/docker/docker/pkg/random"
+	"math/rand/v2"
+	"testing"
 )
 
 func TestUnzipFile(t *testing.T) {
@@ -11,7 +11,7 @@ func TestUnzipFile(t *testing.T) {
 }
 
 func TestInSortedStrings(t *testing.T) {
-	a := []string {"a", "b", "c", "d"}
+	a := []string{"a", "b", "c", "d"}
 
 	for _, v := range a {
 		Assert(InSortedStrings(v, a), "")
@@ -41,11 +41,10 @@ func TestNewRingBuffer(t *testing.T) {
 	}
 }
 
-
 func Test_IncrementStd_Feed(t *testing.T) {
 	values := make([]float64, 100000)
 	for i := range values {
-		values[i] = random.Rand.Float64()
+		values[i] = rand.Float64()
 	}
 
 	iStd := NewIncrementStd()
