@@ -1,11 +1,12 @@
 package compositedatasource
 
 import (
+	"fmt"
+
 	. "github.com/stephenlyu/tds/datasource"
+	"github.com/stephenlyu/tds/date"
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
-	"fmt"
-	"github.com/stephenlyu/tds/date"
 )
 
 type _CompositeDataSource struct {
@@ -30,7 +31,7 @@ func (this *_CompositeDataSource) GetData(security *Security, period Period) (er
 		}
 		ret = append(ret, data...)
 		if len(ret) > 0 {
-			startDate = ret[len(ret) - 1].Date + 1 // 数据周期最小为分钟，分钟毫秒数+1不会导致结果少数据
+			startDate = ret[len(ret)-1].Date + 1 // 数据周期最小为分钟，分钟毫秒数+1不会导致结果少数据
 		}
 	}
 	return nil, ret
@@ -46,7 +47,7 @@ func (this *_CompositeDataSource) GetDataEx(security *Security, period Period, s
 		}
 		ret = append(ret, data...)
 		if len(ret) > 0 {
-			startDate = ret[len(ret) - 1].Date + 1
+			startDate = ret[len(ret)-1].Date + 1
 		}
 		n -= len(data)
 		if n <= 0 {
@@ -70,7 +71,7 @@ func (this *_CompositeDataSource) GetRangeData(security *Security, period Period
 
 		ret = append(ret, data...)
 		if len(ret) > 0 {
-			startDate = ret[len(ret) - 1].Date + 1
+			startDate = ret[len(ret)-1].Date + 1
 		}
 	}
 	return nil, ret
@@ -112,6 +113,10 @@ func (this *_CompositeDataSource) GetLastRecord(security *Security, period Perio
 		}
 	}
 	return nil, nil
+}
+
+func (this *_CompositeDataSource) GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
+	return this.GetRangeData(security, period, startDate, endDate)
 }
 
 func (this *_CompositeDataSource) AppendData(security *Security, period Period, data []Record) error {

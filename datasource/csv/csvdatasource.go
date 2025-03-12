@@ -1,14 +1,15 @@
 package csvdatasource
 
 import (
-	. "github.com/stephenlyu/tds/entity"
-	. "github.com/stephenlyu/tds/period"
-	"github.com/stephenlyu/tds/datasource"
-	"github.com/stephenlyu/tds/storage"
 	"fmt"
+	"os"
 	"path/filepath"
 	"reflect"
-	"os"
+
+	"github.com/stephenlyu/tds/datasource"
+	. "github.com/stephenlyu/tds/entity"
+	. "github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/storage"
 )
 
 type _CSVDataSource struct {
@@ -24,8 +25,10 @@ func NewCSVDataSource(csvDir string) datasource.BaseDataSource {
 }
 
 func (this *_CSVDataSource) filePath(security *Security, period Period) string {
-	fileName := fmt.Sprintf("%s.%s.csv", period.ShortName(), security.String())
-	return filepath.Join(this.csvDir, fileName)
+	periodDir := filepath.Join(this.csvDir, period.ShortName())
+	os.MkdirAll(periodDir, 0666)
+	fileName := fmt.Sprintf("%s.csv", security.String())
+	return filepath.Join(periodDir, fileName)
 }
 
 func (this *_CSVDataSource) GetData(security *Security, period Period) (error, []Record) {
@@ -56,7 +59,7 @@ func (this *_CSVDataSource) GetDataEx(security *Security, period Period, startDa
 			if end > len(records) {
 				end = len(records)
 			}
-			ret := make([]Record, end - i)
+			ret := make([]Record, end-i)
 			copy(ret, records[i:end])
 			return nil, ret
 		}
@@ -96,8 +99,8 @@ func (this *_CSVDataSource) GetRangeData(security *Security, period Period, star
 		}
 	}
 	if end >= start {
-		ret := make([]Record, end - start + 1)
-		copy(ret, records[start:end + 1])
+		ret := make([]Record, end-start+1)
+		copy(ret, records[start:end+1])
 		return nil, ret
 	}
 
@@ -127,7 +130,7 @@ func (this *_CSVDataSource) GetDataFromLast(security *Security, period Period, e
 		start = 0
 	}
 
-	return nil, records[start:end+1]
+	return nil, records[start : end+1]
 }
 
 func (this *_CSVDataSource) GetLastRecord(security *Security, period Period) (error, *Record) {
@@ -137,10 +140,14 @@ func (this *_CSVDataSource) GetLastRecord(security *Security, period Period) (er
 	}
 
 	if len(records) > 0 {
-		r := records[len(records) - 1]
+		r := records[len(records)-1]
 		return nil, &r
 	}
 	return nil, nil
+}
+
+func (this *_CSVDataSource) GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
+	return this.GetRangeData(security, period, startDate, endDate)
 }
 
 func (this *_CSVDataSource) AppendData(security *Security, period Period, data []Record) error {

@@ -1,25 +1,31 @@
 package main
 
 import (
+	"bufio"
+	"flag"
+	"os"
+	"strings"
+
+	"github.com/sirupsen/logrus"
 	"github.com/stephenlyu/tds/datasource"
-	"github.com/stephenlyu/tds/period"
+	csvdatasource "github.com/stephenlyu/tds/datasource/csv"
+	mongodatasource "github.com/stephenlyu/tds/datasource/mongo"
+	redisdatasource "github.com/stephenlyu/tds/datasource/redis"
+	tdxdatasource "github.com/stephenlyu/tds/datasource/tdx"
 	"github.com/stephenlyu/tds/date"
 	"github.com/stephenlyu/tds/entity"
-	"flag"
-	"github.com/stephenlyu/tds/util"
-	"github.com/sirupsen/logrus"
-	"strings"
-	"github.com/stephenlyu/tds/datasource/csv"
-	"github.com/stephenlyu/tds/datasource/redis"
-	"github.com/stephenlyu/tds/datasource/mongo"
+	"github.com/stephenlyu/tds/period"
 	"github.com/stephenlyu/tds/tradedate"
+	"github.com/stephenlyu/tds/util"
 )
 
 //
 // 将数据在数据源间移动
 //
 
-func moveData(srcDs datasource.BaseDataSource, destDs datasource.BaseDataSource, security *entity.Security, p period.Period, startDate string, endDate string) error {
+func moveData(srcDs datasource.BaseDataSource, destDs datasource.BaseDataSource,
+	security *entity.Security, p period.Period, startDate string, endDate string,
+	useQfq bool) error {
 	var start, end uint64
 	if startDate != "" {
 		startTs, _, _, _ := tradedate.GetTradeDateRangeByDateString(security, startDate)
@@ -31,7 +37,14 @@ func moveData(srcDs datasource.BaseDataSource, destDs datasource.BaseDataSource,
 		end, _ = date.SecondString2Timestamp(endTs)
 	}
 
-	err, data := srcDs.GetRangeData(security, p, start, end)
+	var err error
+	var data []entity.Record
+
+	if useQfq {
+		err, data = srcDs.GetForwardAdjustedRangeData(security, p, start, end)
+	} else {
+		err, data = srcDs.GetRangeData(security, p, start, end)
+	}
 	if err != nil {
 		return err
 	}
@@ -51,6 +64,12 @@ func createDataSource(dsType string, params []string) datasource.BaseDataSource 
 			csvDir = params[0]
 		}
 		return csvdatasource.NewCSVDataSource(csvDir)
+	case "tdx":
+		tdxDir := "data"
+		if len(params) > 0 {
+			tdxDir = params[0]
+		}
+		return tdxdatasource.NewDataSource(tdxDir, true)
 	case "redis":
 		redisUrl := "localhost:6379"
 		redisPass := ""
@@ -87,13 +106,39 @@ func createDataSource(dsType string, params []string) datasource.BaseDataSource 
 	return nil
 }
 
+func readLines(filename string) ([]string, error) {
+	// 打开文件
+	file, err := os.Open(filename)
+	if err != nil {
+		return nil, err
+	}
+	// 确保文件在函数结束时关闭
+	defer file.Close()
+
+	var lines []string
+	// 创建一个新的扫描器，用于逐行读取文件
+	scanner := bufio.NewScanner(file)
+	// 逐行扫描文件
+	for scanner.Scan() {
+		// 将当前行添加到切片中
+		lines = append(lines, scanner.Text())
+	}
+	// 检查扫描过程中是否发生错误
+	if err := scanner.Err(); err != nil {
+		return nil, err
+	}
+	return lines, nil
+}
+
 func main() {
-	srcParamPtr := flag.String("src-param", "csv|csv", "Source data source parameter")
-	destParamPtr := flag.String("dest-param", "redis|localhost:6379|", "Destination data source parameter")
+	srcParamPtr := flag.String("src", "csv|csv", "Source data source parameter")
+	destParamPtr := flag.String("dest", "redis|localhost:6379|", "Destination data source parameter")
 	codesPtr := flag.String("code", "", "Security codes")
+	codesFilePtr := flag.String("code-file", "", "Security codes file")
 	periodPtr := flag.String("period", "M1", "Data period")
 	startDatePtr := flag.String("start-date", "", "Start date")
 	endDatePtr := flag.String("end-date", "", "End date")
+	useQfqPtr := flag.Bool("qfq", false, "Use QianFuQaun?")
 	flag.Parse()
 
 	err, p := period.PeriodFromString(*periodPtr)
@@ -102,7 +147,15 @@ func main() {
 	}
 
 	// Parse securities
-	codes := strings.Split(*codesPtr, ",")
+	var codes []string
+	if *codesFilePtr != "" {
+		codes, err = readLines(*codesFilePtr)
+		if err != nil {
+			logrus.Fatalf("read code file fail, err:%+v", err)
+		}
+	} else {
+		codes = strings.Split(*codesPtr, ",")
+	}
 	var securities []entity.Security
 	for _, code := range codes {
 		code = strings.TrimSpace(code)
@@ -136,7 +189,7 @@ func main() {
 
 	for i := range securities {
 		security := &securities[i]
-		err = moveData(srcDs, destDs, security, p, *startDatePtr, *endDatePtr)
+		err = moveData(srcDs, destDs, security, p, *startDatePtr, *endDatePtr, *useQfqPtr)
 		if err != nil {
 			logrus.Fatal(err)
 		}

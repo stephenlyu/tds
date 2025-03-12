@@ -24,8 +24,10 @@ type BaseDataSource interface {
 	GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record)
 	GetLastRecord(security *Security, period Period) (error, *Record)
 
+	GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record)
+
 	AppendData(security *Security, period Period, data []Record) error // Append data
-	SaveData(security *Security, period Period, data []Record) error // Replace data with new data
+	SaveData(security *Security, period Period, data []Record) error   // Replace data with new data
 
 	RemoveData(security *Security, period Period, startDate, endDate uint64) error
 }
@@ -36,9 +38,9 @@ type CompositeDataSource interface {
 }
 
 type DateRange struct {
-	Security *Security
-	StartDate uint64		// inclusive, 0 if no start date
-	EndDate uint64			// exclusive, 0 if no end date
+	Security  *Security
+	StartDate uint64 // inclusive, 0 if no start date
+	EndDate   uint64 // exclusive, 0 if no end date
 }
 
 type DateRangeMapper interface {
@@ -64,7 +66,6 @@ type DataSource interface {
 	Reset()
 
 	SupportedPeriods() []Period
-
 
 	GetForwardAdjustedData(security *Security, period Period) (error, []Record)
 	GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record)

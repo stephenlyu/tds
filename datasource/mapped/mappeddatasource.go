@@ -1,16 +1,17 @@
 package mappeddatasource
 
 import (
+	"math"
+	"sort"
+
 	. "github.com/stephenlyu/tds/datasource"
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
-	"sort"
-	"math"
 	"github.com/stephenlyu/tds/util"
 )
 
 type _MappedDataSource struct {
-	mapper DateRangeMapper
+	mapper   DateRangeMapper
 	targetDs BaseDataSource
 }
 
@@ -28,7 +29,7 @@ func (this *_MappedDataSource) SetTargetDataSource(ds BaseDataSource) {
 
 func (this *_MappedDataSource) getRanges(security *Security) []DateRange {
 	ranges := this.mapper.MapDateRanges(security)
-	sort.SliceStable(ranges, func (i, j int) bool {
+	sort.SliceStable(ranges, func(i, j int) bool {
 		return ranges[i].StartDate < ranges[j].StartDate
 	})
 	return ranges
@@ -42,7 +43,7 @@ func (this *_MappedDataSource) GetData(security *Security, period Period) (error
 	var ret []Record
 
 	for _, r := range ranges {
-		err, data := this.targetDs.GetRangeData(r.Security, period, r.StartDate, r.EndDate - 1)
+		err, data := this.targetDs.GetRangeData(r.Security, period, r.StartDate, r.EndDate-1)
 		if err != nil {
 			return err, nil
 		}
@@ -97,6 +98,10 @@ func (this *_MappedDataSource) GetLastRecord(security *Security, period Period) 
 func (this *_MappedDataSource) AppendData(security *Security, period Period, data []Record) error {
 	panic("Unimplemented")
 	return nil
+}
+
+func (this *_MappedDataSource) GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
+	return this.GetRangeData(security, period, startDate, endDate)
 }
 
 func (this *_MappedDataSource) SaveData(security *Security, period Period, data []Record) error {

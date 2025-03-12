@@ -1,13 +1,14 @@
 package redisdatasource
 
 import (
-	. "github.com/stephenlyu/tds/entity"
-	. "github.com/stephenlyu/tds/period"
-	"github.com/stephenlyu/tds/datasource"
-	"github.com/stephenlyu/tds/storage"
 	"fmt"
 	"math"
 	"sort"
+
+	"github.com/stephenlyu/tds/datasource"
+	. "github.com/stephenlyu/tds/entity"
+	. "github.com/stephenlyu/tds/period"
+	"github.com/stephenlyu/tds/storage"
 )
 
 type _RedisDataSource struct {
@@ -86,6 +87,10 @@ func (this *_RedisDataSource) GetRangeData(security *Security, period Period, st
 	return nil, ret
 }
 
+func (this *_RedisDataSource) GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
+	return this.GetRangeData(security, period, startDate, endDate)
+}
+
 func (this *_RedisDataSource) GetDataFromLast(security *Security, period Period, endDate uint64, count int) (error, []Record) {
 	if endDate == 0 {
 		endDate = math.MaxUint64
@@ -107,7 +112,7 @@ func (this *_RedisDataSource) GetDataFromLast(security *Security, period Period,
 		ret[i] = *r
 	}
 
-	sort.SliceStable(ret, func (i, j int) bool {
+	sort.SliceStable(ret, func(i, j int) bool {
 		return ret[i].Date < ret[j].Date
 	})
 

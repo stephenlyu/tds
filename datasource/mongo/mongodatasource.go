@@ -1,18 +1,19 @@
 package mongodatasource
 
 import (
-	"gopkg.in/mgo.v2"
+	"fmt"
+	"strings"
+
+	"github.com/stephenlyu/tds/datasource"
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
-	"fmt"
+	"gopkg.in/mgo.v2"
 	"gopkg.in/mgo.v2/bson"
-	"github.com/stephenlyu/tds/datasource"
-	"strings"
 )
 
 type _MongoDataSource struct {
 	session *mgo.Session
-	dbName string
+	dbName  string
 }
 
 func NewMongoDataSource(dbUrl string, dbName string) datasource.BaseDataSource {
@@ -100,6 +101,10 @@ func (this *_MongoDataSource) GetLastRecord(security *Security, period Period) (
 		return err, nil
 	}
 	return nil, record
+}
+
+func (this *_MongoDataSource) GetForwardAdjustedRangeData(security *Security, period Period, startDate, endDate uint64) (error, []Record) {
+	return this.GetRangeData(security, period, startDate, endDate)
 }
 
 func (this *_MongoDataSource) AppendData(security *Security, period Period, data []Record) error {
