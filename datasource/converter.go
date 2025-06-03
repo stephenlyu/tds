@@ -1,12 +1,12 @@
 package datasource
 
 import (
-	"sort"
 	"errors"
+	"sort"
 
+	. "github.com/stephenlyu/tds/date"
 	. "github.com/stephenlyu/tds/entity"
 	. "github.com/stephenlyu/tds/period"
-	. "github.com/stephenlyu/tds/date"
 	"github.com/stephenlyu/tds/util"
 )
 
@@ -17,13 +17,13 @@ type Converter interface {
 }
 
 type periodConverter struct {
-	srcPeriod Period
+	srcPeriod  Period
 	destPeriod Period
 }
 
 type forwardAdjustConverter struct {
 	period Period
-	items []InfoExItem
+	items  []InfoExItem
 }
 
 // Period Data Converters
@@ -39,12 +39,12 @@ func NewPeriodConverter(srcPeriod Period, destPeriod Period) Converter {
 func MergeData(destData []Record, sourceData []Record, multiplier int) []Record {
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
-		if i % multiplier == 0 {
+		if i%multiplier == 0 {
 			destData = append(destData, *r)
 			continue
 		}
 
-		dr := &destData[len(destData) - 1]
+		dr := &destData[len(destData)-1]
 
 		dr.Close = r.Close
 		if r.Low < dr.Low {
@@ -60,7 +60,6 @@ func MergeData(destData []Record, sourceData []Record, multiplier int) []Record 
 	}
 	return destData
 }
-
 
 func (this *periodConverter) doMerge(destData []Record, sourceData []Record, multiplier int) []Record {
 	return MergeData(destData, sourceData, multiplier)
@@ -85,7 +84,7 @@ func (this *periodConverter) convertMinute2Minute(sourceData []Record) []Record 
 		}
 
 		lastDay = day
-		if i == len(sourceData) - 1 {
+		if i == len(sourceData)-1 {
 			destData = this.doMerge(destData, sourceData[startIndex:], multiplier)
 		}
 	}
@@ -104,18 +103,18 @@ func (this *periodConverter) convertMinute2Day(sourceData []Record) []Record {
 	for i := 0; i < len(sourceData); i++ {
 		r := &sourceData[i]
 		day := GetDayTimestamp(r.Date)
-		if day != lastDay{
+		if day != lastDay {
 			if startIndex >= 0 {
-				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
-				destData[len(destData) - 1].Date = lastDay
+				destData = this.doMerge(destData, sourceData[startIndex:i], i-startIndex)
+				destData[len(destData)-1].Date = lastDay
 			}
 			startIndex = i
 		}
 
 		lastDay = day
-		if i == len(sourceData) - 1 {
-			destData = this.doMerge(destData, sourceData[startIndex:], i + 1 - startIndex)
-			destData[len(destData) - 1].Date = lastDay
+		if i == len(sourceData)-1 {
+			destData = this.doMerge(destData, sourceData[startIndex:], i+1-startIndex)
+			destData[len(destData)-1].Date = lastDay
 		}
 	}
 
@@ -135,14 +134,14 @@ func (this *periodConverter) convertDay2Week(sourceData []Record) []Record {
 		week := GetDateWeek(r.Date)
 		if week != lastWeek {
 			if startIndex >= 0 {
-				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
+				destData = this.doMerge(destData, sourceData[startIndex:i], i-startIndex)
 			}
 			startIndex = i
 		}
 
 		lastWeek = week
-		if i == len(sourceData) - 1 {
-			destData = this.doMerge(destData, sourceData[startIndex:], i + 1 - startIndex)
+		if i == len(sourceData)-1 {
+			destData = this.doMerge(destData, sourceData[startIndex:], i+1-startIndex)
 		}
 	}
 
@@ -162,14 +161,14 @@ func (this *periodConverter) convertDay2Month(sourceData []Record) []Record {
 		month := GetDateMonth(r.Date)
 		if month != lastMonth {
 			if startIndex >= 0 {
-				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
+				destData = this.doMerge(destData, sourceData[startIndex:i], i-startIndex)
 			}
 			startIndex = i
 		}
 
 		lastMonth = month
-		if i == len(sourceData) - 1 {
-			destData = this.doMerge(destData, sourceData[startIndex:], i + 1 - startIndex)
+		if i == len(sourceData)-1 {
+			destData = this.doMerge(destData, sourceData[startIndex:], i+1-startIndex)
 		}
 	}
 
@@ -189,14 +188,14 @@ func (this *periodConverter) convert2Quarter(sourceData []Record) []Record {
 		quarter := GetDateQuarter(r.Date)
 		if quarter != lastQuarter {
 			if startIndex >= 0 {
-				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
+				destData = this.doMerge(destData, sourceData[startIndex:i], i-startIndex)
 			}
 			startIndex = i
 		}
 
 		lastQuarter = quarter
-		if i == len(sourceData) - 1 {
-			destData = this.doMerge(destData, sourceData[startIndex:], i + 1 - startIndex)
+		if i == len(sourceData)-1 {
+			destData = this.doMerge(destData, sourceData[startIndex:], i+1-startIndex)
 		}
 	}
 
@@ -216,14 +215,14 @@ func (this *periodConverter) convert2Year(sourceData []Record) []Record {
 		year := GetDateYear(r.Date)
 		if year != lastYear {
 			if startIndex >= 0 {
-				destData = this.doMerge(destData, sourceData[startIndex:i], i - startIndex)
+				destData = this.doMerge(destData, sourceData[startIndex:i], i-startIndex)
 			}
 			startIndex = i
 		}
 
 		lastYear = year
-		if i == len(sourceData) - 1 {
-			destData = this.doMerge(destData, sourceData[startIndex:], i + 1 - startIndex)
+		if i == len(sourceData)-1 {
+			destData = this.doMerge(destData, sourceData[startIndex:], i+1-startIndex)
 		}
 	}
 
@@ -234,7 +233,7 @@ func (this *periodConverter) convert2Year(sourceData []Record) []Record {
 
 func (this *periodConverter) convertSimple(sourceData []Record) []Record {
 	multiplier := this.destPeriod.UnitCount() / this.srcPeriod.UnitCount()
-	destData := make([]Record, 0, (len(sourceData) + multiplier - 1) / multiplier)
+	destData := make([]Record, 0, (len(sourceData)+multiplier-1)/multiplier)
 
 	destData = this.doMerge(destData, sourceData, multiplier)
 
@@ -316,14 +315,13 @@ func (this *periodConverter) Convert(sourceData []Record) []Record {
 
 // Forward Adjust Price Converter
 
-
 func NewForwardAdjustConverter(period Period, items []InfoExItem) Converter {
 	cpy := make([]InfoExItem, len(items))
 	for i, item := range items {
 		cpy[i] = item
 	}
 
-	sort.SliceStable(cpy, func (i, j int) bool {
+	sort.SliceStable(cpy, func(i, j int) bool {
 		return cpy[i].Date < cpy[j].Date
 	})
 
@@ -331,8 +329,8 @@ func NewForwardAdjustConverter(period Period, items []InfoExItem) Converter {
 }
 
 func (this *forwardAdjustConverter) doConvert(data []Record, item *InfoExItem) {
-	var forwardAdjustPrice = func (price float64) float64 {
-		ret := ((price - item.Bonus) + item.RationedShares * item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares)
+	var forwardAdjustPrice = func(price float64) float64 {
+		ret := ((price - item.Bonus) + item.RationedShares*item.RationedSharePrice) / (1 + item.DeliveredShares + item.RationedShares)
 		ret = util.Round(ret, 3)
 		return ret
 	}
@@ -360,9 +358,9 @@ func (this *forwardAdjustConverter) Convert(sourceData []Record) []Record {
 	}
 
 	firstDate := GetDateDay(sourceData[0].Date)
-	lastDate := GetDateDay(sourceData[len(sourceData) - 1].Date)
+	lastDate := GetDateDay(sourceData[len(sourceData)-1].Date)
 
-	if int(this.items[len(this.items) - 1].Date) <= firstDate {
+	if int(this.items[len(this.items)-1].Date) <= firstDate {
 		return sourceData
 	}
 
