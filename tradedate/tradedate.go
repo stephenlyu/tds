@@ -238,3 +238,17 @@ func IsInTimeRange(now uint64, timeranges [][2]string, delayMinutes int64) bool 
 	}
 	return false
 }
+
+func CountMinutesInTimeRange(timeranges [][2]string) (minutes int) {
+	for _, span := range timeranges {
+		start := fmt.Sprintf("19700101 %s", span[0])
+		end := fmt.Sprintf("19700101 %s", span[1])
+		startTs, _ := date.SecondString2Timestamp(start)
+		endTs, _ := date.SecondString2Timestamp(end)
+
+		for ts := startTs; ts < endTs; ts += 60 * 1000 {
+			minutes += 1
+		}
+	}
+	return
+}

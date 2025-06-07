@@ -85,3 +85,11 @@ func TestIsInTimeRange(t *testing.T) {
 		fmt.Printf("%s %v\n", time, ret)
 	}
 }
+
+func TestCountMinutesInTimeRange(t *testing.T) {
+	timeRanges := [][2]string{
+		{"09:30:00", "11:30:00"},
+		{"13:00:00", "15:00:00"},
+	}
+	fmt.Println(CountMinutesInTimeRange(timeRanges))
+}
