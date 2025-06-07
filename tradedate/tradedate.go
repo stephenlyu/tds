@@ -1,23 +1,24 @@
 package tradedate
 
 import (
-	"github.com/stephenlyu/tds/entity"
-	"github.com/stephenlyu/tds/util"
-	"github.com/stephenlyu/tds/date"
-	"sync"
-	"github.com/deckarep/golang-set"
-	"github.com/stephenlyu/tds"
-	"time"
 	"fmt"
 	"sort"
+	"sync"
+	"time"
+
+	mapset "github.com/deckarep/golang-set"
+	"github.com/stephenlyu/tds"
+	"github.com/stephenlyu/tds/date"
+	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/util"
 )
 
 const (
-	TRADE_DATE_SEP_TIME = "17:00:00"
+	TRADE_DATE_SEP_TIME  = "17:00:00"
 	TRADE_DATE_DAY_START = "08:00:00"
 
-	DAY_MILLIS = 24 * 60 * 60 * 1000
-	MINUTE_MILLIS = 60 * 1000
+	DAY_MILLIS      = 24 * 60 * 60 * 1000
+	MINUTE_MILLIS   = 60 * 1000
 	MINUTES_PER_DAY = DAY_MILLIS / MINUTE_MILLIS
 )
 
@@ -47,7 +48,7 @@ func (this *_TradeDateCache) Get(exchange string) []string {
 	return r
 }
 
-func (this *_TickerCache) Set(commCode string, item  *_TickerCacheItem) {
+func (this *_TickerCache) Set(commCode string, item *_TickerCacheItem) {
 	tradeDateCacheLock.Lock()
 	defer tradeDateCacheLock.Unlock()
 	(*this)[commCode] = item
@@ -83,7 +84,7 @@ func GetSecurityTradeDates(security *entity.Security) []string {
 	}
 
 	for ts := startTs; ts <= endTs; ts += DAY_MILLIS {
-		d := time.Unix(int64(ts) / 1000, (int64(ts) % 1000) * int64(time.Millisecond)).In(tds.Local)
+		d := time.Unix(int64(ts)/1000, (int64(ts)%1000)*int64(time.Millisecond)).In(tds.Local)
 		ds := d.Format(date.DAY_FORMAT)
 		if nonDatesSet.Contains(ds) {
 			continue
@@ -104,7 +105,7 @@ func GetTradeDateRangeByDateString(security *entity.Security, dateString string)
 
 	for i := 1; i < len(dates); i++ {
 		d := dates[i]
-		pd := dates[i - 1]
+		pd := dates[i-1]
 		st := pd + " " + TRADE_DATE_SEP_TIME
 		et := d + " " + TRADE_DATE_SEP_TIME
 		if dateString >= st && dateString < et {
@@ -125,7 +126,7 @@ func GetTradeDateRange(security *entity.Security, dateString string) (startTs st
 
 	startTs = day + " 00:00:00"
 	ts, _ := date.SecondString2Timestamp(startTs)
-	endTs = date.Timestamp2SecondString(ts + 24 * 60 * 60 * 1000)
+	endTs = date.Timestamp2SecondString(ts + 24*60*60*1000)
 
 	return
 }
@@ -135,7 +136,7 @@ func ToTradeTicker(security *entity.Security, timestamp uint64) uint64 {
 	if timestamp < tickers[0] {
 		return tickers[0]
 	}
-	lastTicker := tickers[len(tickers) - 1]
+	lastTicker := tickers[len(tickers)-1]
 	if timestamp >= lastTicker {
 		return lastTicker
 	}
@@ -145,7 +146,7 @@ func ToTradeTicker(security *entity.Security, timestamp uint64) uint64 {
 			continue
 		}
 		if timestamp < ticker {
-			return tickers[i - 1]
+			return tickers[i-1]
 		}
 	}
 
@@ -204,7 +205,7 @@ func GetTradeTickers(security *entity.Security, timestamp uint64) []uint64 {
 		}
 	}
 
-	sort.SliceStable(tickers, func(i,j int) bool {
+	sort.SliceStable(tickers, func(i, j int) bool {
 		return tickers[i] < tickers[j]
 	})
 
@@ -212,9 +213,28 @@ func GetTradeTickers(security *entity.Security, timestamp uint64) []uint64 {
 	end, _ := date.SecondString2Timestamp(endTs)
 	tickerCache.Set(commCode, &_TickerCacheItem{
 		startTs: start,
-		endTs: end,
+		endTs:   end,
 		Tickers: tickers,
 	})
 
 	return tickers
+}
+
+// @param now - current time
+// @param tradeTime - trade time span
+// @param delayMinutes - munutes extended from end of timespan
+func IsInTimeRange(now uint64, timeranges [][2]string, delayMinutes int64) bool {
+	delayMillis := delayMinutes * 60 * 1000
+	today := date.Timestamp2DayString(now)[:8]
+	for _, span := range timeranges {
+		start := fmt.Sprintf("%s %s", today, span[0])
+		end := fmt.Sprintf("%s %s", today, span[1])
+		startTs, _ := date.SecondString2Timestamp(start)
+		endTs, _ := date.SecondString2Timestamp(end)
+
+		if now >= startTs && now <= uint64(int64(endTs)+delayMillis) {
+			return true
+		}
+	}
+	return false
 }

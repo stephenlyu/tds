@@ -1,11 +1,12 @@
 package tradedate
 
 import (
-	"testing"
 	"fmt"
+	"testing"
+
+	"github.com/stephenlyu/tds/date"
 	"github.com/stephenlyu/tds/entity"
 	"github.com/stephenlyu/tds/util"
-	"github.com/stephenlyu/tds/date"
 )
 
 func TestGetTradeDateRange(t *testing.T) {
@@ -57,4 +58,30 @@ func TestToTradeTicker(t *testing.T) {
 	ts, _ := date.SecondString2Timestamp("20181008 15:03:00")
 	ticker := ToTradeTicker(security, ts)
 	fmt.Println(date.Timestamp2SecondString(ticker))
+}
+
+func TestIsInTimeRange(t *testing.T) {
+	timeRanges := [][2]string{
+		{"09:30:00", "11:30:00"},
+		{"13:00:00", "15:00:00"},
+	}
+	for _, time := range []string{
+		"20250606 09:29:00",
+		"20250606 09:30:00",
+		"20250606 10:00:00",
+		"20250606 11:29:00",
+		"20250606 11:30:00",
+		"20250606 11:31:00",
+		"20250606 12:59:00",
+		"20250606 13:00:00",
+		"20250606 14:59:00",
+		"20250606 15:00:00",
+		"20250606 15:02:00",
+		"20250606 15:03:00",
+		"20250606 15:04:00",
+	} {
+		ts, _ := date.SecondString2Timestamp(time)
+		ret := IsInTimeRange(ts, timeRanges, 3)
+		fmt.Printf("%s %v\n", time, ret)
+	}
 }
