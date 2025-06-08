@@ -1,25 +1,23 @@
 package entity
 
 import (
-	"unsafe"
-	"github.com/stephenlyu/tds/date"
-	"fmt"
-	"github.com/golang/protobuf/proto"
 	"encoding/json"
-)
+	"fmt"
+	"unsafe"
 
+	"github.com/golang/protobuf/proto"
+	"github.com/stephenlyu/tds/date"
+)
 
 // After price adjusted, it maybe a negative value
 type Record struct {
-	Date uint64			`bson:"_id"`	// UTC毫秒数
-	Open float64						// 开盘价，精确到分
-	Close float64
-	High float64
-	Low float64
+	Date   uint64  `bson:"_id"` // UTC毫秒数
+	Open   float64 // 开盘价，精确到分
+	Close  float64
+	High   float64
+	Low    float64
 	Volume float64
 	Amount float64
-	BuyVolume float64
-	SellVolume float64
 }
 
 type RecordEx struct {
@@ -28,18 +26,18 @@ type RecordEx struct {
 }
 
 type InfoExItem struct {
-	Date uint32					`json:"date"`
-	Bonus float64				`json:"bonus"`
-	DeliveredShares float64		`json:"delivered_shares"`
-	RationedSharePrice float64	`json:"rationed_share_price"`
-	RationedShares float64		`json:"rationed_shares"`
+	Date               uint32  `json:"date"`
+	Bonus              float64 `json:"bonus"`
+	DeliveredShares    float64 `json:"delivered_shares"`
+	RationedSharePrice float64 `json:"rationed_share_price"`
+	RationedShares     float64 `json:"rationed_shares"`
 }
 
 const recordSize = int(unsafe.Sizeof(Record{}))
 
 func (this *Record) Eq(that *Record) bool {
 	return this.Date == that.Date && this.Open == that.Open && this.Close == that.Close && this.High == that.High &&
-	this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
+		this.Low == that.Low && this.Volume == that.Volume && this.Amount == that.Amount
 }
 
 func (this *Record) GetUTCDate() uint64 {
@@ -82,18 +80,10 @@ func (this *Record) GetVolume() float64 {
 	return this.Volume
 }
 
-func (this *Record) GetBuyVolume() float64 {
-	return this.BuyVolume
-}
-
-func (this *Record) GetSellVolume() float64 {
-	return this.SellVolume
-}
-
 func (this *Record) String() string {
-	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f BuyVolume: %.08f SellVolume: %.08f}`,
+	return fmt.Sprintf(`Record {Date: %s Open: %.08f Close: %.08f Low: %.08f High: %.08f Amount: %.08f Volume: %.08f}`,
 		this.GetDate(), this.GetOpen(), this.GetClose(), this.GetLow(), this.GetHigh(),
-		this.GetAmount(), this.GetVolume(), this.GetBuyVolume(), this.GetSellVolume())
+		this.GetAmount(), this.GetVolume())
 }
 
 func (this *Record) ToJsonBytes() ([]byte, error) {
@@ -106,11 +96,11 @@ func (this *RecordEx) ToJsonBytes() ([]byte, error) {
 
 func (this *Record) ToProtoBytes() ([]byte, error) {
 	pr := ProtoRecord{
-		Date: int64(this.Date),
-		Open: this.Open,
-		Close: this.Close,
-		High: this.High,
-		Low: this.Low,
+		Date:   int64(this.Date),
+		Open:   this.Open,
+		Close:  this.Close,
+		High:   this.High,
+		Low:    this.Low,
 		Volume: this.Volume,
 		Amount: this.Amount,
 	}
@@ -126,11 +116,11 @@ func RecordFromProtoBytes(bytes []byte) (*Record, error) {
 	}
 
 	return &Record{
-		Date: uint64(pr.GetDate()),
-		Open: pr.GetOpen(),
-		Close: pr.GetClose(),
-		High: pr.GetHigh(),
-		Low: pr.GetLow(),
+		Date:   uint64(pr.GetDate()),
+		Open:   pr.GetOpen(),
+		Close:  pr.GetClose(),
+		High:   pr.GetHigh(),
+		Low:    pr.GetLow(),
 		Volume: pr.GetVolume(),
 		Amount: pr.GetAmount(),
 	}, nil
@@ -143,31 +133,31 @@ const (
 )
 
 type TickItem struct {
-	Code string
-	Timestamp uint64
+	Code        string
+	Timestamp   uint64
 	HighLimited float64
-	LowLimited float64
-	Price float64
-	Position float64
-	Settle float64
-	Open float64
-	Close float64
-	High float64
-	Low float64
-	Volume float64
+	LowLimited  float64
+	Price       float64
+	Position    float64
+	Settle      float64
+	Open        float64
+	Close       float64
+	High        float64
+	Low         float64
+	Volume      float64
 	TotalVolume float64
-	Amount float64
+	Amount      float64
 	TotalAmount float64
-	PreSettle float64
+	PreSettle   float64
 	PrePosition float64
-	PreClose float64
-	AskPrices []float64
-	AskVolumes []float64
-	BidPrices []float64
-	BidVolumes []float64
-	Side int
-	BuyVolume float64
-	SellVolume float64
+	PreClose    float64
+	AskPrices   []float64
+	AskVolumes  []float64
+	BidPrices   []float64
+	BidVolumes  []float64
+	Side        int
+	BuyVolume   float64
+	SellVolume  float64
 }
 
 func (this *TickItem) GetDate() string {
@@ -180,31 +170,31 @@ func (this *TickItem) ToJsonBytes() ([]byte, error) {
 
 func (this *TickItem) ToProtoBytes() ([]byte, error) {
 	pr := ProtoTick{
-		Code: this.Code,
-		Timestamp: int64(this.Timestamp),
+		Code:        this.Code,
+		Timestamp:   int64(this.Timestamp),
 		HighLimited: this.HighLimited,
-		LowLimited: this.LowLimited,
-		Price: this.Price,
-		Position: this.Position,
-		Settle: this.Settle,
-		Open: this.Open,
-		Close: this.Close,
-		High: this.High,
-		Low: this.Low,
-		Volume: this.Volume,
+		LowLimited:  this.LowLimited,
+		Price:       this.Price,
+		Position:    this.Position,
+		Settle:      this.Settle,
+		Open:        this.Open,
+		Close:       this.Close,
+		High:        this.High,
+		Low:         this.Low,
+		Volume:      this.Volume,
 		TotalVolume: this.TotalVolume,
-		Amount: this.Amount,
+		Amount:      this.Amount,
 		TotalAmount: this.TotalAmount,
-		PreSettle: this.PreSettle,
+		PreSettle:   this.PreSettle,
 		PrePosition: this.PrePosition,
-		PreClose: this.PreClose,
-		AskPrices: this.AskPrices,		// 不拷贝
-		AskVolumes: this.AskVolumes,
-		BidPrices: this.BidPrices,
-		BidVolumes: this.BidVolumes,
-		Side: int32(this.Side),
-		BuyVolume: this.BuyVolume,
-		SellVolume: this.SellVolume,
+		PreClose:    this.PreClose,
+		AskPrices:   this.AskPrices, // 不拷贝
+		AskVolumes:  this.AskVolumes,
+		BidPrices:   this.BidPrices,
+		BidVolumes:  this.BidVolumes,
+		Side:        int32(this.Side),
+		BuyVolume:   this.BuyVolume,
+		SellVolume:  this.SellVolume,
 	}
 
 	return proto.Marshal(&pr)
@@ -218,30 +208,30 @@ func TickItemFromProtoBytes(bytes []byte) (*TickItem, error) {
 	}
 
 	return &TickItem{
-		Code: pr.Code,
-		Timestamp: uint64(pr.Timestamp),
+		Code:        pr.Code,
+		Timestamp:   uint64(pr.Timestamp),
 		HighLimited: pr.HighLimited,
-		LowLimited: pr.LowLimited,
-		Price: pr.Price,
-		Position: pr.Position,
-		Settle: pr.Settle,
-		Open: pr.Open,
-		Close: pr.Close,
-		High: pr.High,
-		Low: pr.Low,
-		Volume: pr.Volume,
+		LowLimited:  pr.LowLimited,
+		Price:       pr.Price,
+		Position:    pr.Position,
+		Settle:      pr.Settle,
+		Open:        pr.Open,
+		Close:       pr.Close,
+		High:        pr.High,
+		Low:         pr.Low,
+		Volume:      pr.Volume,
 		TotalVolume: pr.TotalVolume,
-		Amount: pr.Amount,
+		Amount:      pr.Amount,
 		TotalAmount: pr.TotalAmount,
-		PreSettle: pr.PreSettle,
+		PreSettle:   pr.PreSettle,
 		PrePosition: pr.PrePosition,
-		PreClose: pr.PreClose,
-		AskPrices: pr.AskPrices,		// 不拷贝
-		AskVolumes: pr.AskVolumes,
-		BidPrices: pr.BidPrices,
-		BidVolumes: pr.BidVolumes,
-		Side: int(pr.Side),
-		BuyVolume: pr.BuyVolume,
-		SellVolume: pr.SellVolume,
+		PreClose:    pr.PreClose,
+		AskPrices:   pr.AskPrices, // 不拷贝
+		AskVolumes:  pr.AskVolumes,
+		BidPrices:   pr.BidPrices,
+		BidVolumes:  pr.BidVolumes,
+		Side:        int(pr.Side),
+		BuyVolume:   pr.BuyVolume,
+		SellVolume:  pr.SellVolume,
 	}, nil
 }

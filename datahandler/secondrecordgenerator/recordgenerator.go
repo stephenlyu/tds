@@ -1,8 +1,9 @@
 package secondrecordgenerator
 
 import (
-	"github.com/stephenlyu/tds/entity"
 	"math"
+
+	"github.com/stephenlyu/tds/entity"
 	"github.com/stephenlyu/tds/util"
 )
 
@@ -13,7 +14,7 @@ import (
 type SecondRecordGenerator struct {
 	Security *entity.Security
 
-	Current *entity.Record		// 当前的K线
+	Current *entity.Record // 当前的K线
 }
 
 func NewSecondRecordGenerator(security *entity.Security) *SecondRecordGenerator {
@@ -32,15 +33,13 @@ func (this *SecondRecordGenerator) Feed(tick *entity.TickItem) *entity.Record {
 
 	if this.Current == nil || ticker != this.Current.Date {
 		this.Current = &entity.Record{
-			Date: ticker,
-			Open: tick.Price,
-			Close: tick.Price,
-			High: tick.High,
-			Low: tick.Low,
+			Date:   ticker,
+			Open:   tick.Price,
+			Close:  tick.Price,
+			High:   tick.High,
+			Low:    tick.Low,
 			Volume: tick.Volume,
 			Amount: tick.Amount,
-			BuyVolume: tick.BuyVolume,
-			SellVolume: tick.SellVolume,
 		}
 
 	} else {
@@ -49,8 +48,6 @@ func (this *SecondRecordGenerator) Feed(tick *entity.TickItem) *entity.Record {
 		this.Current.Low = math.Min(this.Current.Low, tick.Low)
 		this.Current.Volume += tick.Volume
 		this.Current.Amount += tick.Amount
-		this.Current.BuyVolume += tick.BuyVolume
-		this.Current.SellVolume += tick.SellVolume
 	}
 
 	return this.Current

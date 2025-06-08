@@ -1,11 +1,11 @@
 package secondsmoother
 
 import (
-	"github.com/stephenlyu/tds/entity"
 	"github.com/stephenlyu/tds/datahandler"
-	"github.com/stephenlyu/tds/util"
-	"github.com/stephenlyu/tds/tradedate"
 	"github.com/stephenlyu/tds/date"
+	"github.com/stephenlyu/tds/entity"
+	"github.com/stephenlyu/tds/tradedate"
+	"github.com/stephenlyu/tds/util"
 )
 
 //
@@ -15,11 +15,11 @@ import (
 const SECOND_MILLIS = 1000
 
 type _SecondSmoother struct {
-	security *entity.Security
+	security   *entity.Security
 	prevRecord *entity.Record
 
-	tickers []uint64
-	currentIndex int
+	tickers        []uint64
+	currentIndex   int
 	startTs, endTs uint64
 }
 
@@ -27,7 +27,7 @@ func NewSecondSmoother(security *entity.Security, initPrevRecord *entity.Record)
 	util.Assert(security != nil, "")
 
 	ret := &_SecondSmoother{
-		security: security,
+		security:   security,
 		prevRecord: initPrevRecord,
 	}
 
@@ -43,10 +43,10 @@ func (this *_SecondSmoother) init(r *entity.Record) {
 	startTs, endTs, _, _ := tradedate.GetTradeDateRangeByDateString(this.security, r.GetDate())
 	minutes := tradedate.GetTradeTickers(this.security, r.Date)
 
-	tickers := make([]uint64, len(minutes) * 60)
+	tickers := make([]uint64, len(minutes)*60)
 	for i, m := range minutes {
 		for j := 0; j < 60; j++ {
-			tickers[i * 60 + j] = m + uint64(j) * 1000
+			tickers[i*60+j] = m + uint64(j)*1000
 		}
 	}
 	this.tickers = tickers
@@ -86,21 +86,19 @@ func (this *_SecondSmoother) Feed(r *entity.Record) []*entity.Record {
 	}
 
 	// 休息时段不进行平滑
-	if this.tickers[index] - this.tickers[index - 1] > SECOND_MILLIS {
+	if this.tickers[index]-this.tickers[index-1] > SECOND_MILLIS {
 		goto done
 	}
 
 	for i := this.currentIndex + 1; i < index; i++ {
 		ret = append(ret, &entity.Record{
-			Date: this.tickers[i],
-			Open: this.prevRecord.Close,
-			Close: this.prevRecord.Close,
-			High: this.prevRecord.Close,
-			Low: this.prevRecord.Close,
+			Date:   this.tickers[i],
+			Open:   this.prevRecord.Close,
+			Close:  this.prevRecord.Close,
+			High:   this.prevRecord.Close,
+			Low:    this.prevRecord.Close,
 			Volume: 0,
 			Amount: 0,
-			BuyVolume: 0,
-			SellVolume: 0,
 		})
 	}
 
